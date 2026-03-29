@@ -4,89 +4,53 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 90%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 90%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 90%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 0 85% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 80%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 0 85% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 85% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 85% 50%;
 
-    --radius: 0.5rem;
+    --radius: 2px;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 80%;
+    --sidebar-primary: 0 85% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 80%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 85% 50%;
+
+    --metal-dark: #0f0f0f;
+    --metal-mid: #1a1a1a;
+    --metal-light: #242424;
+    --metal-shine: #333333;
+    --rust-red: #c0392b;
+    --rust-orange: #e67e22;
+    --steel-gray: #7f8c8d;
+    --chrome: #bdc3c7;
   }
 }
 
@@ -97,5 +61,303 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Roboto", sans-serif;
+    background-color: var(--metal-dark);
+    background-image: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.008) 3px,
+      rgba(255, 255, 255, 0.008) 4px
+    );
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--metal-dark);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--rust-red);
+  }
+}
+
+@layer components {
+  .metal-texture {
+    background: linear-gradient(
+      135deg,
+      var(--metal-dark) 0%,
+      var(--metal-mid) 25%,
+      var(--metal-shine) 50%,
+      var(--metal-mid) 75%,
+      var(--metal-dark) 100%
+    );
+  }
+
+  .metal-border {
+    border: 1px solid var(--metal-shine);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .section-divider {
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--rust-red),
+      var(--rust-orange),
+      var(--rust-red),
+      transparent
+    );
+  }
+
+  .nav-link {
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #9ca3af;
+    transition: color 0.2s;
+    cursor: pointer;
+  }
+
+  .nav-link:hover {
+    color: white;
+  }
+
+  .nav-link.active {
+    color: white;
+    border-bottom: 2px solid var(--rust-red);
+    padding-bottom: 2px;
+  }
+
+  .part-card {
+    background: var(--metal-mid);
+    border: 1px solid var(--metal-shine);
+    transition: all 0.3s;
+  }
+
+  .part-card:hover {
+    border-color: var(--rust-red);
+    box-shadow: 0 0 20px rgba(192, 57, 43, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .btn-primary {
+    padding: 0.75rem 1.5rem;
+    font-family: "Oswald", sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.875rem;
+    color: white;
+    background: var(--rust-red);
+    border: 1px solid var(--rust-red);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover {
+    background: transparent;
+    color: var(--rust-red);
+    box-shadow: 0 0 15px rgba(192, 57, 43, 0.4);
+  }
+
+  .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    font-family: "Oswald", sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.875rem;
+    background: transparent;
+    border: 1px solid var(--metal-shine);
+    color: var(--chrome);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--chrome);
+    color: white;
+  }
+
+  .status-available {
+    padding: 2px 8px;
+    font-family: "Oswald", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(39, 174, 96, 0.15);
+    color: #27ae60;
+    border: 1px solid rgba(39, 174, 96, 0.4);
+  }
+
+  .status-low {
+    padding: 2px 8px;
+    font-family: "Oswald", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(230, 126, 34, 0.15);
+    color: var(--rust-orange);
+    border: 1px solid rgba(230, 126, 34, 0.4);
+  }
+
+  .status-out {
+    padding: 2px 8px;
+    font-family: "Oswald", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: rgba(192, 57, 43, 0.15);
+    color: var(--rust-red);
+    border: 1px solid rgba(192, 57, 43, 0.4);
+  }
+
+  .hero-grid {
+    background-image:
+      linear-gradient(rgba(192, 57, 43, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(192, 57, 43, 0.08) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    color: white;
+    background: var(--metal-light);
+    border: 1px solid var(--metal-shine);
+    outline: none;
+    font-family: "Roboto", sans-serif;
+    transition: all 0.2s;
+  }
+
+  .search-input::placeholder {
+    color: #6b7280;
+  }
+
+  .search-input:focus {
+    border-color: var(--rust-red);
+    box-shadow: 0 0 10px rgba(192, 57, 43, 0.2);
+  }
+
+  .filter-btn {
+    padding: 0.5rem 1rem;
+    font-family: "Oswald", sans-serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: var(--metal-light);
+    border: 1px solid var(--metal-shine);
+    color: var(--steel-gray);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn.active,
+  .filter-btn:hover {
+    border-color: var(--rust-red);
+    color: white;
+    background: rgba(192, 57, 43, 0.15);
+  }
+
+  .car-card {
+    background: var(--metal-mid);
+    border: 1px solid var(--metal-shine);
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .car-card:hover {
+    border-color: var(--rust-orange);
+    box-shadow: 0 0 25px rgba(230, 126, 34, 0.2);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in {
+    animation: fadeInUp 0.6s ease forwards;
+  }
+
+  .fade-in-delay-1 {
+    animation-delay: 0.1s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+    animation-name: fadeInUp;
+    animation-duration: 0.6s;
+  }
+  .fade-in-delay-2 {
+    animation-delay: 0.2s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+    animation-name: fadeInUp;
+    animation-duration: 0.6s;
+  }
+  .fade-in-delay-3 {
+    animation-delay: 0.3s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+    animation-name: fadeInUp;
+    animation-duration: 0.6s;
+  }
+  .fade-in-delay-4 {
+    animation-delay: 0.4s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+    animation-name: fadeInUp;
+    animation-duration: 0.6s;
+  }
+
+  .counter-number {
+    font-family: "Oswald", sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--rust-red);
+    line-height: 1;
+  }
+
+  .section-title {
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    position: relative;
+    display: inline-block;
+  }
+
+  .section-title::after {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 60px;
+    background: var(--rust-red);
+    margin-top: 8px;
   }
 }
