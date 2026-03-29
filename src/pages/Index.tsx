@@ -1128,6 +1128,33 @@ export default function Index() {
 
           <div className="section-divider" />
 
+          {/* Russia delivery banner */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-8 py-16">
+            <div className="relative overflow-hidden p-8 sm:p-12 flex flex-col sm:flex-row items-center gap-8" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+              <div className="absolute -right-8 -top-8 text-9xl font-bold select-none" style={{ color: "rgba(192,57,43,0.06)", fontFamily: "Oswald" }}>РФ</div>
+              <div className="flex-shrink-0 w-20 h-20 flex items-center justify-center" style={{ background: "rgba(192,57,43,0.12)", border: "1px solid rgba(192,57,43,0.3)" }}>
+                <Icon name="Truck" size={36} style={{ color: "var(--rust-red)" }} />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3" style={{ fontFamily: "Oswald", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Работаем и отправляем по всей России
+                </h2>
+                <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--steel-gray)", fontFamily: "Roboto", fontWeight: 300, maxWidth: 540 }}>
+                  Отправляем запчасти транспортными компаниями СДЭК, Деловые Линии, Байкал Сервис в любой город страны. Упаковка надёжная — деталь доедет в целости.
+                </p>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-3">
+                  {["Москва","Санкт-Петербург","Екатеринбург","Новосибирск","Казань","Краснодар","Владивосток","и все регионы"].map((city, i) => (
+                    <span key={i} className="text-xs px-3 py-1" style={{ background: i === 7 ? "rgba(192,57,43,0.18)" : "rgba(255,255,255,0.05)", border: "1px solid var(--metal-shine)", color: i === 7 ? "var(--rust-orange)" : "var(--chrome)", fontFamily: "Roboto" }}>
+                      {city}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div className="section-divider" />
+
           {/* CTA */}
           <section className="relative py-24 overflow-hidden">
             <div className="absolute inset-0">
