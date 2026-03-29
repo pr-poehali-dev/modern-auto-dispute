@@ -3,61 +3,191 @@ import Icon from "@/components/ui/icon";
 
 const HERO_BG = "https://cdn.poehali.dev/projects/d712c762-63b0-49d0-9843-525135dcbeff/files/2e306825-116f-4f90-b8fe-14174863d64d.jpg";
 const PARTS_BG = "https://cdn.poehali.dev/projects/d712c762-63b0-49d0-9843-525135dcbeff/files/93ac4e93-ccfd-49b9-9c20-1d380c8e8cb9.jpg";
+const API_URL = "https://functions.poehali.dev/7f90d170-c74d-4482-a06b-1bb83d4c98f4";
 
-type Page = "home" | "catalog" | "cars" | "contacts";
+type Page = "home" | "request" | "contacts";
 
-const PARTS_DATA = [
-  { id: 1, name: "Двигатель 2.0 TDI", car: "Volkswagen Passat B7", category: "Двигатель", price: "45 000", stock: 2 },
-  { id: 2, name: "АКПП 6-ступ", car: "BMW 5 Series F10", category: "КПП", price: "38 000", stock: 1 },
-  { id: 3, name: "Передний бампер", car: "Toyota Camry V70", category: "Кузов", price: "8 500", stock: 5 },
-  { id: 4, name: "Рулевая рейка", car: "Audi A4 B9", category: "Ходовая", price: "12 000", stock: 0 },
-  { id: 5, name: "Фара левая LED", car: "Mercedes E-Class W213", category: "Оптика", price: "22 000", stock: 3 },
-  { id: 6, name: "Капот", car: "Honda Accord X", category: "Кузов", price: "11 000", stock: 2 },
-  { id: 7, name: "Генератор 180А", car: "Ford Focus III", category: "Электрика", price: "7 500", stock: 1 },
-  { id: 8, name: "Задняя балка", car: "Hyundai Tucson TL", category: "Ходовая", price: "18 000", stock: 4 },
-  { id: 9, name: "Стойка передняя", car: "Kia Sportage IV", category: "Ходовая", price: "5 800", stock: 0 },
-  { id: 10, name: "Радиатор охлаждения", car: "Skoda Octavia A7", category: "Охлаждение", price: "9 200", stock: 2 },
-  { id: 11, name: "Дверь задняя правая", car: "Volkswagen Tiguan II", category: "Кузов", price: "14 000", stock: 1 },
-  { id: 12, name: "Подушка безопасности", car: "Toyota RAV4 CA40", category: "Безопасность", price: "6 500", stock: 3 },
-];
-
-const CARS_DATA = [
-  { id: 1, make: "BMW", model: "5 Series F10", year: 2013, mileage: "210 000", color: "Чёрный", status: "В разборке", parts: 47 },
-  { id: 2, make: "Volkswagen", model: "Passat B7", year: 2014, mileage: "185 000", color: "Серебристый", status: "В разборке", parts: 63 },
-  { id: 3, make: "Toyota", model: "Camry V70", year: 2019, mileage: "95 000", color: "Белый", status: "Поступит скоро", parts: 0 },
-  { id: 4, make: "Mercedes", model: "E-Class W213", year: 2017, mileage: "142 000", color: "Синий", status: "В разборке", parts: 38 },
-  { id: 5, make: "Audi", model: "A4 B9", year: 2016, mileage: "178 000", color: "Серый", status: "В разборке", parts: 52 },
-  { id: 6, make: "Honda", model: "Accord X", year: 2018, mileage: "118 000", color: "Чёрный", status: "В разборке", parts: 29 },
-];
-
-const CATEGORIES = ["Все", "Двигатель", "КПП", "Кузов", "Ходовая", "Оптика", "Электрика", "Охлаждение", "Безопасность"];
-
-const getStockStatus = (qty: number) => {
-  if (qty === 0) return { label: "Нет в наличии", cls: "status-out" };
-  if (qty <= 1) return { label: "Мало", cls: "status-low" };
-  return { label: "В наличии", cls: "status-available" };
+// База марок → моделей → поколений
+const CAR_DB: Record<string, Record<string, string[]>> = {
+  "Toyota": {
+    "Camry":      ["V40 (2006–2011)", "V50 (2011–2017)", "V70 (2017–2021)", "V75 (2021–н.в.)"],
+    "Corolla":    ["E140 (2007–2013)", "E150 (2007–2013)", "E160 (2013–2019)", "E210 (2019–н.в.)"],
+    "RAV4":       ["CA20 (2000–2006)", "CA30 (2006–2012)", "CA40 (2012–2018)", "CA50 (2018–н.в.)"],
+    "Land Cruiser": ["100 (1998–2007)", "200 (2007–2021)", "300 (2021–н.в.)"],
+    "Highlander": ["XU20 (2001–2007)", "XU40 (2007–2013)", "XU50 (2013–2019)", "XU70 (2019–н.в.)"],
+    "Yaris":      ["XP10 (1999–2005)", "XP90 (2005–2011)", "XP130 (2011–2020)", "XP210 (2020–н.в.)"],
+  },
+  "Volkswagen": {
+    "Passat":     ["B5 (1996–2005)", "B6 (2005–2010)", "B7 (2010–2015)", "B8 (2015–н.в.)"],
+    "Golf":       ["IV (1997–2003)", "V (2003–2008)", "VI (2008–2012)", "VII (2012–2019)", "VIII (2019–н.в.)"],
+    "Tiguan":     ["I (2007–2016)", "II (2016–н.в.)"],
+    "Polo":       ["IV (2001–2009)", "V (2009–2017)", "VI (2017–н.в.)"],
+    "Touareg":    ["I (2002–2010)", "II (2010–2018)", "III (2018–н.в.)"],
+    "Jetta":      ["IV (1999–2005)", "V (2005–2010)", "VI (2010–2018)", "VII (2018–н.в.)"],
+  },
+  "BMW": {
+    "3 Series":   ["E36 (1990–2000)", "E46 (1998–2006)", "E90 (2005–2011)", "F30 (2011–2019)", "G20 (2018–н.в.)"],
+    "5 Series":   ["E39 (1995–2003)", "E60 (2003–2010)", "F10 (2010–2016)", "G30 (2016–н.в.)"],
+    "7 Series":   ["E38 (1994–2001)", "E65 (2001–2008)", "F01 (2008–2015)", "G11 (2015–н.в.)"],
+    "X3":         ["E83 (2003–2010)", "F25 (2010–2017)", "G01 (2017–н.в.)"],
+    "X5":         ["E53 (1999–2006)", "E70 (2006–2013)", "F15 (2013–2018)", "G05 (2018–н.в.)"],
+    "X6":         ["E71 (2008–2014)", "F16 (2014–2019)", "G06 (2019–н.в.)"],
+  },
+  "Mercedes-Benz": {
+    "C-Class":    ["W202 (1993–2000)", "W203 (2000–2007)", "W204 (2007–2014)", "W205 (2014–н.в.)"],
+    "E-Class":    ["W210 (1995–2003)", "W211 (2002–2009)", "W212 (2009–2016)", "W213 (2016–н.в.)"],
+    "S-Class":    ["W220 (1998–2005)", "W221 (2005–2013)", "W222 (2013–2020)", "W223 (2020–н.в.)"],
+    "GLC":        ["X253 (2015–2022)", "X254 (2022–н.в.)"],
+    "GLE":        ["W166 (2015–2018)", "W167 (2018–н.в.)"],
+    "A-Class":    ["W168 (1997–2004)", "W169 (2004–2012)", "W176 (2012–2018)", "W177 (2018–н.в.)"],
+  },
+  "Audi": {
+    "A4":         ["B5 (1994–2001)", "B6 (2000–2004)", "B7 (2004–2008)", "B8 (2007–2015)", "B9 (2015–н.в.)"],
+    "A6":         ["C5 (1997–2004)", "C6 (2004–2011)", "C7 (2011–2018)", "C8 (2018–н.в.)"],
+    "Q5":         ["8R (2008–2017)", "FY (2017–н.в.)"],
+    "Q7":         ["4L (2005–2015)", "4M (2015–н.в.)"],
+    "A3":         ["8L (1996–2003)", "8P (2003–2012)", "8V (2012–2020)", "8Y (2020–н.в.)"],
+    "Q3":         ["8U (2011–2018)", "F3 (2018–н.в.)"],
+  },
+  "Honda": {
+    "Accord":     ["VI (1997–2002)", "VII (2002–2008)", "VIII (2007–2012)", "IX (2012–2017)", "X (2017–н.в.)"],
+    "CR-V":       ["I (1995–2001)", "II (2001–2006)", "III (2006–2012)", "IV (2012–2016)", "V (2016–н.в.)"],
+    "Civic":      ["VII (2000–2005)", "VIII (2005–2011)", "IX (2011–2015)", "X (2015–2021)", "XI (2021–н.в.)"],
+    "Pilot":      ["I (2002–2008)", "II (2008–2015)", "III (2015–2022)", "IV (2022–н.в.)"],
+  },
+  "Ford": {
+    "Focus":      ["I (1998–2005)", "II (2004–2011)", "III (2011–2018)", "IV (2018–н.в.)"],
+    "Mondeo":     ["II (1996–2000)", "III (2000–2007)", "IV (2007–2014)", "V (2014–н.в.)"],
+    "Explorer":   ["IV (2005–2010)", "V (2010–2019)", "VI (2019–н.в.)"],
+    "Kuga":       ["I (2008–2012)", "II (2012–2019)", "III (2019–н.в.)"],
+  },
+  "Hyundai": {
+    "Tucson":     ["JM (2004–2010)", "LM (2010–2015)", "TL (2015–2021)", "NX4 (2021–н.в.)"],
+    "Sonata":     ["EF (1998–2004)", "NF (2004–2010)", "YF (2010–2014)", "LF (2014–2017)", "DN8 (2019–н.в.)"],
+    "Santa Fe":   ["SM (2000–2006)", "CM (2006–2012)", "DM (2012–2018)", "TM (2018–н.в.)"],
+    "Creta":      ["GS (2015–2021)", "SU2 (2021–н.в.)"],
+    "Elantra":    ["XD (2000–2006)", "HD (2006–2010)", "MD (2010–2016)", "AD (2015–2020)", "CN7 (2020–н.в.)"],
+  },
+  "Kia": {
+    "Sportage":   ["JA (1993–2004)", "KM (2004–2010)", "SL (2010–2016)", "QL (2016–2021)", "NQ5 (2021–н.в.)"],
+    "Cerato":     ["LD (2003–2008)", "TD (2008–2013)", "YD (2013–2018)", "BD (2018–н.в.)"],
+    "Sorento":    ["BL (2002–2009)", "XM (2009–2014)", "UM (2014–2020)", "MQ4 (2020–н.в.)"],
+    "Rio":        ["JB (2005–2011)", "UB (2011–2017)", "FB (2017–н.в.)"],
+    "Optima":     ["TF (2010–2015)", "JF (2015–2020)", "DL3 (2020–н.в.)"],
+  },
+  "Mazda": {
+    "Mazda 6":    ["GG (2002–2007)", "GH (2007–2012)", "GJ (2012–н.в.)"],
+    "Mazda 3":    ["BK (2003–2009)", "BL (2009–2013)", "BM (2013–2019)", "BP (2019–н.в.)"],
+    "CX-5":       ["KE (2011–2017)", "KF (2017–н.в.)"],
+    "CX-7":       ["ER (2006–2012)"],
+    "Mazda 2":    ["DY (2002–2007)", "DE (2007–2014)", "DJ (2014–н.в.)"],
+  },
+  "Skoda": {
+    "Octavia":    ["A4 (1996–2010)", "A5 (2004–2013)", "A7 (2013–2020)", "A8 (2020–н.в.)"],
+    "Superb":     ["B5 (2001–2008)", "B6 (2008–2015)", "B8 (2015–н.в.)"],
+    "Kodiaq":     ["NS (2016–н.в.)"],
+    "Karoq":      ["NU (2017–н.в.)"],
+    "Fabia":      ["6Y (1999–2007)", "5J (2007–2014)", "NJ (2014–2021)", "PJ (2021–н.в.)"],
+  },
+  "Nissan": {
+    "Qashqai":    ["J10 (2006–2013)", "J11 (2013–2021)", "J12 (2021–н.в.)"],
+    "X-Trail":    ["T30 (2000–2007)", "T31 (2007–2013)", "T32 (2014–н.в.)"],
+    "Tiida":      ["C11 (2004–2012)", "C13 (2011–2018)"],
+    "Almera":     ["N16 (2000–2006)", "G11 (2012–н.в.)"],
+    "Murano":     ["Z50 (2002–2008)", "Z51 (2008–2016)", "Z52 (2015–н.в.)"],
+  },
+  "Renault": {
+    "Logan":      ["I (2004–2012)", "II (2012–2022)"],
+    "Duster":     ["I (2010–2017)", "II (2017–н.в.)"],
+    "Megane":     ["II (2002–2009)", "III (2008–2016)", "IV (2015–н.в.)"],
+    "Sandero":    ["I (2007–2012)", "II (2012–2020)", "III (2020–н.в.)"],
+    "Koleos":     ["I (2008–2016)", "II (2016–н.в.)"],
+  },
+  "Lada": {
+    "Vesta":      ["I (2015–н.в.)"],
+    "Granta":     ["2190 (2011–н.в.)"],
+    "XRAY":       ["I (2015–н.в.)"],
+    "Largus":     ["I (2012–н.в.)"],
+    "Niva":       ["2121 (1977–н.в.)", "Niva Travel (2020–н.в.)"],
+  },
 };
+
+const MAKES = Object.keys(CAR_DB).sort();
+
+interface FormData {
+  name: string;
+  phone: string;
+  make: string;
+  model: string;
+  generation: string;
+  part_desc: string;
+  comment: string;
+}
+
+const EMPTY_FORM: FormData = { name: "", phone: "", make: "", model: "", generation: "", part_desc: "", comment: "" };
 
 export default function Index() {
   const [page, setPage] = useState<Page>("home");
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("Все");
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [adminMode, setAdminMode] = useState(false);
-  const [stocks, setStocks] = useState<Record<number, number>>(
-    Object.fromEntries(PARTS_DATA.map(p => [p.id, p.stock]))
-  );
-
-  const filtered = PARTS_DATA.filter(p => {
-    const matchCat = category === "Все" || p.category === category;
-    const q = search.toLowerCase();
-    const matchSearch = !q || p.name.toLowerCase().includes(q) || p.car.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
-    return matchCat && matchSearch;
-  });
+  const [form, setForm] = useState<FormData>(EMPTY_FORM);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
   const nav = (p: Page) => { setPage(p); setMobileMenu(false); window.scrollTo(0, 0); };
 
-  const navLabels: Record<Page, string> = { home: "Главная", catalog: "Каталог", cars: "Авто в наличии", contacts: "Контакты" };
+  const navLabels: Record<Page, string> = { home: "Главная", request: "Найти запчасть", contacts: "Контакты" };
+
+  const models = form.make ? Object.keys(CAR_DB[form.make] || {}).sort() : [];
+  const generations = form.make && form.model ? (CAR_DB[form.make]?.[form.model] || []) : [];
+
+  const setField = (field: keyof FormData, value: string) => {
+    setForm(prev => {
+      const next = { ...prev, [field]: value };
+      if (field === "make") { next.model = ""; next.generation = ""; }
+      if (field === "model") { next.generation = ""; }
+      return next;
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError("Укажите имя и телефон");
+      return;
+    }
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setSent(true);
+        setForm(EMPTY_FORM);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Ошибка отправки");
+      }
+    } catch {
+      setError("Нет соединения. Позвоните нам напрямую.");
+    }
+    setSending(false);
+  };
+
+  const selectStyle = {
+    width: "100%",
+    padding: "0.75rem 1rem",
+    color: "white",
+    background: "var(--metal-light)",
+    border: "1px solid var(--metal-shine)",
+    outline: "none",
+    fontFamily: "Roboto, sans-serif",
+    fontSize: "0.9rem",
+    appearance: "none" as const,
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--metal-dark)" }}>
@@ -71,13 +201,13 @@ export default function Index() {
                 <Icon name="Wrench" size={18} className="text-white" />
               </div>
               <div className="text-left">
-                <div className="text-white font-bold text-sm tracking-widest" style={{ fontFamily: "Oswald", textTransform: "uppercase", letterSpacing: "0.15em" }}>МеталлЧасть</div>
+                <div className="text-white font-bold text-sm" style={{ fontFamily: "Oswald", textTransform: "uppercase", letterSpacing: "0.15em" }}>МеталлЧасть</div>
                 <div className="text-xs" style={{ color: "var(--steel-gray)", fontFamily: "Roboto" }}>Разборка автомобилей</div>
               </div>
             </button>
 
             <div className="hidden md:flex items-center gap-8">
-              {(["home", "catalog", "cars", "contacts"] as Page[]).map(p => (
+              {(["home", "request", "contacts"] as Page[]).map(p => (
                 <button key={p} onClick={() => nav(p)} className={`nav-link ${page === p ? "active" : ""}`}>{navLabels[p]}</button>
               ))}
             </div>
@@ -97,7 +227,7 @@ export default function Index() {
 
         {mobileMenu && (
           <div style={{ background: "var(--metal-mid)", borderTop: "1px solid var(--metal-shine)" }} className="md:hidden px-4 py-4 flex flex-col gap-4">
-            {(["home", "catalog", "cars", "contacts"] as Page[]).map(p => (
+            {(["home", "request", "contacts"] as Page[]).map(p => (
               <button key={p} onClick={() => nav(p)} className={`nav-link text-left ${page === p ? "active" : ""}`}>{navLabels[p]}</button>
             ))}
             <a href="tel:+78001234567" className="text-sm font-semibold" style={{ color: "var(--rust-orange)", fontFamily: "Oswald" }}>8 800 123-45-67</a>
@@ -132,12 +262,12 @@ export default function Index() {
                 </h1>
 
                 <p className="fade-in-delay-2 text-base sm:text-lg mb-10 max-w-xl" style={{ color: "var(--chrome)", fontFamily: "Roboto", fontWeight: 300, lineHeight: 1.7 }}>
-                  Более 5000 запчастей в наличии. Разборка легковых и коммерческих авто. Гарантия 30 дней на все детали. Самовывоз и доставка по РФ.
+                  Оставьте заявку — менеджер перезвонит, уточнит наличие и подберёт нужную деталь. Разборка легковых и коммерческих авто. Гарантия 30 дней.
                 </p>
 
                 <div className="fade-in-delay-3 flex flex-wrap gap-4">
-                  <button className="btn-primary" onClick={() => nav("catalog")}>Найти запчасть</button>
-                  <button className="btn-secondary" onClick={() => nav("cars")}>Авто в разборке</button>
+                  <button className="btn-primary" onClick={() => nav("request")}>Найти запчасть</button>
+                  <button className="btn-secondary" onClick={() => nav("contacts")}>Позвонить нам</button>
                 </div>
               </div>
 
@@ -146,7 +276,7 @@ export default function Index() {
                   { n: "5 000+", l: "Запчастей" },
                   { n: "200+", l: "Авто разобрано" },
                   { n: "15 лет", l: "На рынке" },
-                  { n: "100%", l: "Гарантия" },
+                  { n: "30 дней", l: "Гарантия" },
                 ].map((s, i) => (
                   <div key={i} className="flex flex-col items-center justify-center py-6 px-4" style={{ background: "rgba(20,20,20,0.9)", borderRight: i < 3 ? "1px solid var(--metal-shine)" : "none" }}>
                     <div className="counter-number text-3xl">{s.n}</div>
@@ -154,6 +284,29 @@ export default function Index() {
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
+
+          <div className="section-divider" />
+
+          {/* How it works */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-8 py-20">
+            <h2 className="section-title text-3xl sm:text-4xl font-bold text-white mb-12">Как это работает</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {[
+                { step: "01", icon: "ClipboardList", title: "Заполните заявку", desc: "Укажите марку, модель, поколение автомобиля и название нужной запчасти" },
+                { step: "02", icon: "Phone", title: "Менеджер перезвонит", desc: "В течение 30 минут уточним наличие, цену и состояние детали" },
+                { step: "03", icon: "PackageCheck", title: "Получите деталь", desc: "Самовывоз или доставка транспортной компанией в любой регион России" },
+              ].map((item, i) => (
+                <div key={i} className="part-card p-7 relative">
+                  <div className="absolute top-5 right-5 text-5xl font-bold" style={{ color: "rgba(192,57,43,0.12)", fontFamily: "Oswald" }}>{item.step}</div>
+                  <div className="w-12 h-12 flex items-center justify-center mb-5" style={{ background: "rgba(192,57,43,0.12)", border: "1px solid rgba(192,57,43,0.3)" }}>
+                    <Icon name={item.icon} size={22} style={{ color: "var(--rust-red)" }} />
+                  </div>
+                  <h3 className="text-white text-lg font-bold mb-2" style={{ fontFamily: "Oswald" }}>{item.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--steel-gray)", fontFamily: "Roboto", fontWeight: 300 }}>{item.desc}</p>
+                </div>
+              ))}
             </div>
           </section>
 
@@ -182,35 +335,6 @@ export default function Index() {
 
           <div className="section-divider" />
 
-          {/* Popular parts */}
-          <section className="max-w-7xl mx-auto px-4 sm:px-8 py-20">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
-              <h2 className="section-title text-3xl sm:text-4xl font-bold text-white">Популярные запчасти</h2>
-              <button className="btn-secondary text-xs self-start" onClick={() => nav("catalog")}>Весь каталог →</button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {PARTS_DATA.slice(0, 6).map((part) => {
-                const st = getStockStatus(stocks[part.id]);
-                return (
-                  <div key={part.id} className="part-card p-5">
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs tracking-widest" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>{part.category}</span>
-                      <span className={st.cls}>{st.label}</span>
-                    </div>
-                    <h3 className="text-white text-base font-semibold mb-1" style={{ fontFamily: "Oswald" }}>{part.name}</h3>
-                    <p className="text-xs mb-4" style={{ color: "var(--steel-gray)" }}>{part.car}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold" style={{ color: "var(--rust-orange)", fontFamily: "Oswald" }}>{part.price} ₽</span>
-                      <button className="btn-primary text-xs py-2 px-4" onClick={() => nav("contacts")}>Заказать</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          <div className="section-divider" />
-
           {/* CTA */}
           <section className="relative py-24 overflow-hidden">
             <div className="absolute inset-0">
@@ -219,180 +343,176 @@ export default function Index() {
             </div>
             <div className="relative z-10 max-w-2xl mx-auto px-4 text-center">
               <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6" style={{ fontFamily: "Oswald" }}>
-                НЕ НАШЛИ<br /><span style={{ color: "var(--rust-red)" }}>НУЖНУЮ ДЕТАЛЬ?</span>
+                НУЖНА<br /><span style={{ color: "var(--rust-red)" }}>ЗАПЧАСТЬ?</span>
               </h2>
               <p className="mb-8 text-base leading-relaxed" style={{ color: "var(--chrome)", fontFamily: "Roboto", fontWeight: 300 }}>
-                Оставьте заявку — найдём нужную запчасть в течение 24 часов или подберём аналог
+                Оставьте заявку — перезвоним за 30 минут и уточним наличие
               </p>
-              <button className="btn-primary text-base px-10 py-4" onClick={() => nav("contacts")}>Оставить заявку</button>
+              <button className="btn-primary text-base px-10 py-4" onClick={() => nav("request")}>Оставить заявку</button>
             </div>
           </section>
         </div>
       )}
 
-      {/* ─── CATALOG ─── */}
-      {page === "catalog" && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10">
-          <div className="mb-8">
-            <h1 className="section-title text-3xl sm:text-4xl font-bold text-white mb-2">Каталог запчастей</h1>
-            <p className="text-sm" style={{ color: "var(--steel-gray)" }}>{filtered.length} позиций найдено</p>
-          </div>
-
-          {/* Admin toggle */}
-          <div className="flex items-center gap-4 mb-6 flex-wrap">
-            <span className="text-xs tracking-widest" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>УПРАВЛЕНИЕ ОСТАТКАМИ:</span>
-            <button
-              onClick={() => setAdminMode(!adminMode)}
-              className="relative w-12 h-6 transition-all duration-300"
-              style={{ background: adminMode ? "var(--rust-red)" : "var(--metal-shine)" }}
-            >
-              <div className="absolute top-1 w-4 h-4 bg-white transition-all duration-300" style={{ left: adminMode ? "calc(100% - 20px)" : "4px" }} />
-            </button>
-            {adminMode && <span className="text-xs" style={{ color: "var(--rust-orange)", fontFamily: "Oswald" }}>РЕЖИМ РЕДАКТИРОВАНИЯ АКТИВЕН</span>}
-          </div>
-
-          {/* Search */}
-          <div className="relative mb-4">
-            <Icon name="Search" size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "var(--steel-gray)" }} />
-            <input className="search-input pl-11" placeholder="Поиск по названию, марке авто, категории..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {CATEGORIES.map(c => (
-              <button key={c} className={`filter-btn ${category === c ? "active" : ""}`} onClick={() => setCategory(c)}>{c}</button>
-            ))}
-          </div>
-
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map((part) => {
-              const qty = stocks[part.id];
-              const st = getStockStatus(qty);
-              return (
-                <div key={part.id} className="part-card p-5 flex flex-col">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="text-xs tracking-widest" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>{part.category}</span>
-                    <span className={st.cls}>{st.label}</span>
-                  </div>
-                  <h3 className="text-white text-sm font-semibold mb-1" style={{ fontFamily: "Oswald" }}>{part.name}</h3>
-                  <p className="text-xs mb-3" style={{ color: "var(--steel-gray)" }}>{part.car}</p>
-
-                  {adminMode ? (
-                    <div className="mb-3 mt-auto">
-                      <div className="text-xs mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>ОСТАТОК НА СКЛАДЕ</div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="w-9 h-9 text-white font-bold text-lg flex items-center justify-center transition-colors"
-                          style={{ background: "var(--metal-shine)", border: "1px solid var(--metal-shine)" }}
-                          onClick={() => setStocks(s => ({ ...s, [part.id]: Math.max(0, s[part.id] - 1) }))}
-                        >−</button>
-                        <div className="flex-1 text-center text-white font-bold text-xl" style={{ fontFamily: "Oswald", background: "var(--metal-light)", padding: "4px 0", border: "1px solid var(--metal-shine)" }}>{qty}</div>
-                        <button
-                          className="w-9 h-9 text-white font-bold text-lg flex items-center justify-center transition-colors"
-                          style={{ background: "var(--rust-red)", border: "1px solid var(--rust-red)" }}
-                          onClick={() => setStocks(s => ({ ...s, [part.id]: s[part.id] + 1 }))}
-                        >+</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-xs mb-3" style={{ color: "var(--steel-gray)" }}>
-                      В наличии: <span className="font-semibold" style={{ color: qty > 0 ? "var(--chrome)" : "var(--rust-red)" }}>{qty} шт.</span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: "1px solid var(--metal-shine)" }}>
-                    <span className="text-lg font-bold" style={{ color: "var(--rust-orange)", fontFamily: "Oswald" }}>{part.price} ₽</span>
-                    {!adminMode && (
-                      <button
-                        className="btn-primary text-xs py-2 px-3"
-                        style={{ opacity: qty === 0 ? 0.45 : 1, cursor: qty === 0 ? "not-allowed" : "pointer" }}
-                        onClick={() => qty > 0 && nav("contacts")}
-                      >
-                        {qty === 0 ? "Нет" : "Заказать"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {filtered.length === 0 && (
-            <div className="text-center py-24">
-              <Icon name="PackageSearch" size={56} className="mx-auto mb-4" style={{ color: "var(--metal-shine)" }} />
-              <p className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Oswald" }}>Ничего не найдено</p>
-              <p className="text-sm mb-6" style={{ color: "var(--steel-gray)" }}>Попробуйте другой запрос или оставьте заявку</p>
-              <button className="btn-primary" onClick={() => nav("contacts")}>Оставить заявку</button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ─── CARS ─── */}
-      {page === "cars" && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10">
+      {/* ─── REQUEST FORM ─── */}
+      {page === "request" && (
+        <div className="max-w-3xl mx-auto px-4 sm:px-8 py-12">
           <div className="mb-10">
-            <h1 className="section-title text-3xl sm:text-4xl font-bold text-white mb-2">Автомобили в разборке</h1>
-            <p className="text-sm" style={{ color: "var(--steel-gray)" }}>Актуальный список авто — запросите любую запчасть</p>
+            <h1 className="section-title text-3xl sm:text-4xl font-bold text-white mb-2">Найти запчасть</h1>
+            <p className="text-sm" style={{ color: "var(--steel-gray)" }}>
+              Заполните форму — менеджер перезвонит и уточнит наличие
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {CARS_DATA.map((car) => (
-              <div key={car.id} className="car-card">
-                <div className="relative flex flex-col items-center justify-center" style={{ height: 180, background: "var(--metal-light)" }}>
-                  <div className="absolute inset-0 hero-grid opacity-40" />
-                  <Icon name="Car" size={72} style={{ color: "var(--metal-shine)", position: "relative" }} />
-                  <span className="text-xs mt-2 tracking-widest relative" style={{ color: "var(--steel-gray)", fontFamily: "Oswald", textTransform: "uppercase" }}>{car.make}</span>
+          {sent ? (
+            <div className="text-center py-16 px-6" style={{ background: "var(--metal-mid)", border: "1px solid rgba(39,174,96,0.4)" }}>
+              <div className="w-16 h-16 flex items-center justify-center mx-auto mb-6" style={{ background: "rgba(39,174,96,0.12)", border: "1px solid rgba(39,174,96,0.3)" }}>
+                <Icon name="CheckCircle" size={32} style={{ color: "#27ae60" }} />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: "Oswald" }}>Заявка отправлена!</h2>
+              <p className="mb-8" style={{ color: "var(--steel-gray)" }}>Менеджер перезвонит вам в течение 30 минут</p>
+              <button className="btn-primary" onClick={() => setSent(false)}>Отправить ещё одну</button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }} className="p-6 sm:p-8">
 
-                  <div className="absolute top-3 right-3">
-                    <span style={{ padding: "2px 8px", fontFamily: "Oswald", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}
-                      className={car.status === "В разборке" ? "status-available" : "status-low"}>
-                      {car.status}
-                    </span>
+              {/* Блок авто */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: "1px solid var(--metal-shine)" }}>
+                  <div className="w-7 h-7 flex items-center justify-center flex-shrink-0" style={{ background: "var(--rust-red)" }}>
+                    <Icon name="Car" size={14} className="text-white" />
                   </div>
-
-                  {car.parts > 0 && (
-                    <div className="absolute bottom-3 left-3 px-2 py-1 text-white" style={{ background: "rgba(192,57,43,0.85)", fontFamily: "Oswald", fontSize: "0.65rem", letterSpacing: "0.1em" }}>
-                      {car.parts} ЗАПЧАСТЕЙ
-                    </div>
-                  )}
+                  <span className="font-bold text-white" style={{ fontFamily: "Oswald", letterSpacing: "0.1em" }}>АВТОМОБИЛЬ</span>
                 </div>
 
-                <div className="p-5">
-                  <h3 className="text-white text-xl font-bold mb-3" style={{ fontFamily: "Oswald" }}>{car.make} {car.model}</h3>
-                  <div className="grid grid-cols-3 gap-3 mb-4">
-                    {[
-                      { l: "Год", v: String(car.year) },
-                      { l: "Пробег", v: car.mileage + " км" },
-                      { l: "Цвет", v: car.color },
-                    ].map((item, i) => (
-                      <div key={i}>
-                        <div className="text-xs mb-1" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>{item.l}</div>
-                        <div className="text-sm text-white font-medium">{item.v}</div>
-                      </div>
-                    ))}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Марка */}
+                  <div>
+                    <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>МАРКА *</label>
+                    <div className="relative">
+                      <select
+                        style={selectStyle}
+                        value={form.make}
+                        onChange={e => setField("make", e.target.value)}
+                      >
+                        <option value="" style={{ background: "#242424" }}>Выберите марку</option>
+                        {MAKES.map(m => <option key={m} value={m} style={{ background: "#242424" }}>{m}</option>)}
+                      </select>
+                      <Icon name="ChevronDown" size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--steel-gray)" }} />
+                    </div>
                   </div>
-                  <button className="btn-secondary w-full text-center text-xs" onClick={() => nav("contacts")}>
-                    Запросить запчасть
-                  </button>
+
+                  {/* Модель */}
+                  <div>
+                    <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>МОДЕЛЬ</label>
+                    <div className="relative">
+                      <select
+                        style={{ ...selectStyle, opacity: form.make ? 1 : 0.4 }}
+                        value={form.model}
+                        onChange={e => setField("model", e.target.value)}
+                        disabled={!form.make}
+                      >
+                        <option value="" style={{ background: "#242424" }}>Выберите модель</option>
+                        {models.map(m => <option key={m} value={m} style={{ background: "#242424" }}>{m}</option>)}
+                      </select>
+                      <Icon name="ChevronDown" size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--steel-gray)" }} />
+                    </div>
+                  </div>
+
+                  {/* Поколение */}
+                  <div>
+                    <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>ПОКОЛЕНИЕ</label>
+                    <div className="relative">
+                      <select
+                        style={{ ...selectStyle, opacity: form.model ? 1 : 0.4 }}
+                        value={form.generation}
+                        onChange={e => setField("generation", e.target.value)}
+                        disabled={!form.model}
+                      >
+                        <option value="" style={{ background: "#242424" }}>Выберите поколение</option>
+                        {generations.map(g => <option key={g} value={g} style={{ background: "#242424" }}>{g}</option>)}
+                      </select>
+                      <Icon name="ChevronDown" size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--steel-gray)" }} />
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          <div className="mt-12 p-10 text-center" style={{ border: "1px dashed var(--metal-shine)", background: "rgba(20,20,20,0.6)" }}>
-            <Icon name="Car" size={36} className="mx-auto mb-4" style={{ color: "var(--rust-orange)", opacity: 0.5 }} />
-            <h3 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "Oswald" }}>Продаёте авто на запчасти?</h3>
-            <p className="text-sm mb-6" style={{ color: "var(--steel-gray)" }}>Предложим цену за ваш автомобиль в течение 1 часа</p>
-            <button className="btn-primary" onClick={() => nav("contacts")}>Предложить авто</button>
-          </div>
+              {/* Блок запчасть */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: "1px solid var(--metal-shine)" }}>
+                  <div className="w-7 h-7 flex items-center justify-center flex-shrink-0" style={{ background: "var(--rust-red)" }}>
+                    <Icon name="Wrench" size={14} className="text-white" />
+                  </div>
+                  <span className="font-bold text-white" style={{ fontFamily: "Oswald", letterSpacing: "0.1em" }}>ЗАПЧАСТЬ</span>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>НАЗВАНИЕ ЗАПЧАСТИ *</label>
+                    <input
+                      className="search-input"
+                      placeholder="Например: передний бампер, двигатель 2.0, фара правая..."
+                      value={form.part_desc}
+                      onChange={e => setField("part_desc", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>КОММЕНТАРИЙ</label>
+                    <textarea
+                      className="search-input"
+                      rows={3}
+                      style={{ resize: "vertical" }}
+                      placeholder="Дополнительная информация: цвет кузова, VIN, срочность..."
+                      value={form.comment}
+                      onChange={e => setField("comment", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Блок контакты */}
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: "1px solid var(--metal-shine)" }}>
+                  <div className="w-7 h-7 flex items-center justify-center flex-shrink-0" style={{ background: "var(--rust-red)" }}>
+                    <Icon name="User" size={14} className="text-white" />
+                  </div>
+                  <span className="font-bold text-white" style={{ fontFamily: "Oswald", letterSpacing: "0.1em" }}>КОНТАКТНЫЕ ДАННЫЕ</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>ИМЯ *</label>
+                    <input className="search-input" placeholder="Ваше имя" value={form.name} onChange={e => setField("name", e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>ТЕЛЕФОН *</label>
+                    <input className="search-input" placeholder="+7 (___) ___-__-__" value={form.phone} onChange={e => setField("phone", e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="mb-4 px-4 py-3 text-sm" style={{ background: "rgba(192,57,43,0.15)", border: "1px solid rgba(192,57,43,0.4)", color: "var(--rust-red)", fontFamily: "Roboto" }}>
+                  {error}
+                </div>
+              )}
+
+              <button type="submit" className="btn-primary w-full text-center py-4 text-base" disabled={sending} style={{ opacity: sending ? 0.7 : 1 }}>
+                {sending ? "Отправляем..." : "Отправить заявку — перезвоним за 30 минут"}
+              </button>
+
+              <p className="text-center text-xs mt-4" style={{ color: "var(--steel-gray)" }}>
+                Нажимая кнопку, вы соглашаетесь на обработку персональных данных
+              </p>
+            </form>
+          )}
         </div>
       )}
 
       {/* ─── CONTACTS ─── */}
       {page === "contacts" && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-12">
           <div className="mb-10">
             <h1 className="section-title text-3xl sm:text-4xl font-bold text-white mb-2">Контакты</h1>
             <p className="text-sm" style={{ color: "var(--steel-gray)" }}>Приезжайте или свяжитесь удобным способом</p>
@@ -418,7 +538,6 @@ export default function Index() {
                 </div>
               ))}
 
-              {/* Map placeholder */}
               <div className="flex flex-col items-center justify-center gap-3" style={{ height: 200, background: "var(--metal-mid)", border: "1px solid var(--metal-shine)", position: "relative", overflow: "hidden" }}>
                 <div className="absolute inset-0 hero-grid opacity-30" />
                 <Icon name="MapPin" size={36} style={{ color: "var(--rust-red)", position: "relative" }} />
@@ -427,27 +546,19 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Form */}
-            <div className="p-7" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
-              <h3 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: "Oswald" }}>Оставить заявку</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>ИМЯ</label>
-                  <input className="search-input" placeholder="Ваше имя" />
-                </div>
-                <div>
-                  <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>ТЕЛЕФОН</label>
-                  <input className="search-input" placeholder="+7 (___) ___-__-__" />
-                </div>
-                <div>
-                  <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>НУЖНАЯ ЗАПЧАСТЬ</label>
-                  <input className="search-input" placeholder="Напишите что ищете..." />
-                </div>
-                <div>
-                  <label className="block text-xs tracking-widest mb-2" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>МАРКА И МОДЕЛЬ АВТО</label>
-                  <input className="search-input" placeholder="Пример: Toyota Camry 2018" />
-                </div>
-                <button className="btn-primary w-full text-center mt-2">Отправить заявку</button>
+            <div className="p-7 flex flex-col" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+              <h3 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: "Oswald" }}>Быстрая заявка</h3>
+              <p className="text-sm mb-6 leading-relaxed" style={{ color: "var(--steel-gray)" }}>
+                Для подбора запчасти воспользуйтесь полной формой — там можно указать марку, модель и поколение автомобиля.
+              </p>
+              <button className="btn-primary w-full text-center mb-4" onClick={() => nav("request")}>
+                Открыть форму заявки
+              </button>
+              <div className="text-center mt-auto">
+                <p className="text-xs mb-3" style={{ color: "var(--steel-gray)" }}>или позвоните сразу</p>
+                <a href="tel:+78001234567" className="text-2xl font-bold" style={{ fontFamily: "Oswald", color: "var(--rust-orange)", letterSpacing: "0.05em" }}>
+                  8 800 123-45-67
+                </a>
               </div>
             </div>
           </div>
@@ -461,12 +572,12 @@ export default function Index() {
             <div>
               <div className="text-white font-bold text-lg mb-3" style={{ fontFamily: "Oswald", letterSpacing: "0.15em" }}>МЕТАЛЛЧАСТЬ</div>
               <p className="text-sm leading-relaxed" style={{ color: "var(--steel-gray)", fontFamily: "Roboto", fontWeight: 300 }}>
-                Авторазборка с 15-летним опытом. Качественные запчасти с гарантией для любого автомобиля.
+                Авторазборка с 15-летним опытом. Качественные запчасти с гарантией. Перезваниваем за 30 минут.
               </p>
             </div>
             <div>
               <div className="text-xs tracking-widest mb-4" style={{ color: "var(--rust-red)", fontFamily: "Oswald" }}>РАЗДЕЛЫ</div>
-              {(["home", "catalog", "cars", "contacts"] as Page[]).map(p => (
+              {(["home", "request", "contacts"] as Page[]).map(p => (
                 <button key={p} onClick={() => nav(p)} className="block text-sm mb-2 text-left hover:text-white transition-colors" style={{ color: "var(--steel-gray)", fontFamily: "Roboto" }}>
                   {navLabels[p]}
                 </button>

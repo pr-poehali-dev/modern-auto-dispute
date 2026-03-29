@@ -1,0 +1,34 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Отправка заявки",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Иван Петров",
+        "phone": "+7 (999) 123-45-67",
+        "make": "Toyota",
+        "model": "Camry",
+        "generation": "V70 (2018–2021)",
+        "part_desc": "Передний бампер",
+        "comment": "Срочно нужен"
+      },
+      "expectedStatus": 200,
+      "expectedBody": { "ok": true },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Ошибка — нет имени",
+      "method": "POST",
+      "path": "/",
+      "body": { "phone": "+7 999 000 00 00" },
+      "expectedStatus": 400
+    }
+  ]
+}
