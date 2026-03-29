@@ -294,17 +294,27 @@ export default function Index() {
             <h2 className="section-title text-3xl sm:text-4xl font-bold text-white mb-12">Как это работает</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {[
-                { step: "01", icon: "ClipboardList", title: "Заполните заявку", desc: "Укажите марку, модель, поколение автомобиля и название нужной запчасти" },
-                { step: "02", icon: "Phone", title: "Менеджер перезвонит", desc: "В течение 30 минут уточним наличие, цену и состояние детали" },
-                { step: "03", icon: "PackageCheck", title: "Получите деталь", desc: "Самовывоз или доставка транспортной компанией в любой регион России" },
+                { step: "01", icon: "ClipboardList", title: "Заполните заявку", desc: "Укажите марку, модель, поколение автомобиля и название нужной запчасти", link: true },
+                { step: "02", icon: "Phone", title: "Менеджер перезвонит", desc: "В течение 30 минут уточним наличие, цену и состояние детали", link: false },
+                { step: "03", icon: "PackageCheck", title: "Получите деталь", desc: "Самовывоз или доставка транспортной компанией в любой регион России", link: false },
               ].map((item, i) => (
-                <div key={i} className="part-card p-7 relative">
+                <div
+                  key={i}
+                  className="part-card p-7 relative"
+                  onClick={item.link ? () => nav("request") : undefined}
+                  style={{ cursor: item.link ? "pointer" : "default" }}
+                >
                   <div className="absolute top-5 right-5 text-5xl font-bold" style={{ color: "rgba(192,57,43,0.12)", fontFamily: "Oswald" }}>{item.step}</div>
                   <div className="w-12 h-12 flex items-center justify-center mb-5" style={{ background: "rgba(192,57,43,0.12)", border: "1px solid rgba(192,57,43,0.3)" }}>
                     <Icon name={item.icon} size={22} style={{ color: "var(--rust-red)" }} />
                   </div>
-                  <h3 className="text-white text-lg font-bold mb-2" style={{ fontFamily: "Oswald" }}>{item.title}</h3>
+                  <h3 className="text-lg font-bold mb-2" style={{ fontFamily: "Oswald", color: item.link ? "var(--rust-orange)" : "white" }}>{item.title}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: "var(--steel-gray)", fontFamily: "Roboto", fontWeight: 300 }}>{item.desc}</p>
+                  {item.link && (
+                    <div className="flex items-center gap-1 mt-3 text-xs font-semibold" style={{ color: "var(--rust-red)", fontFamily: "Oswald", letterSpacing: "0.1em" }}>
+                      ПЕРЕЙТИ К ФОРМЕ <Icon name="ArrowRight" size={12} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
