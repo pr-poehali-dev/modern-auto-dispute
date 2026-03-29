@@ -114,19 +114,21 @@ def handler(event: dict, context) -> dict:
     </div>
     """
 
+    gmail_user = os.environ.get("CONTACT_EMAIL", "")
+    gmail_password = os.environ.get("GMAIL_APP_PASSWORD", "")
+
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"Заявка с сайта — {name} — {car_info or 'авто не указано'}"
-    msg["From"] = "noreply@poehali.dev"
+    msg["From"] = gmail_user
     msg["To"] = to_email
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
     save_request(user_id, name, phone, make, model, generation, part_desc, comment)
 
     try:
-        with smtplib.SMTP("smtp.poehali.dev", 587, timeout=15) as smtp:
-            smtp.starttls()
-            smtp.login("noreply@poehali.dev", os.environ.get("SMTP_PASSWORD", "poehali"))
-            smtp.sendmail("noreply@poehali.dev", to_email, msg.as_string())
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as smtp:
+            smtp.login(gmail_user, gmail_password)
+            smtp.sendmail(gmail_user, to_email, msg.as_string())
     except Exception as e:
         print(f"SMTP error: {e}")
 
