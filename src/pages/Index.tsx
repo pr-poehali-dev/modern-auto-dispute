@@ -1101,7 +1101,7 @@ export default function Index() {
                   { n: "5 000+", l: "Запчастей" },
                   { n: "200+", l: "Авто разобрано" },
                   { n: "15 лет", l: "На рынке" },
-                  { n: "30 дней", l: "Гарантия" },
+                  { n: "14 дней", l: "Гарантия" },
                 ].map((s, i) => (
                   <div key={i} className="flex flex-col items-center justify-center py-6 px-4" style={{ background: "rgba(20,20,20,0.9)", borderRight: i < 3 ? "1px solid var(--metal-shine)" : "none" }}>
                     <div className="counter-number text-3xl">{s.n}</div>
@@ -1152,7 +1152,7 @@ export default function Index() {
             <h2 className="section-title text-3xl sm:text-4xl font-bold text-white mb-12">Почему выбирают нас</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { icon: "ShieldCheck", title: "Гарантия 30 дней", desc: "На каждую деталь выдаём чек и гарантийный талон" },
+                { icon: "ShieldCheck", title: "Гарантия 14 дней", desc: "На каждую деталь выдаём чек и гарантийный талон" },
                 { icon: "PackageSearch", title: "Проверка на стенде", desc: "Каждая запчасть проверяется перед продажей" },
                 { icon: "Truck", title: "Доставка по РФ", desc: "Отправляем транспортными компаниями в любой регион" },
                 { icon: "Headphones", title: "Консультация", desc: "Подберём аналог и проверим совместимость бесплатно" },
