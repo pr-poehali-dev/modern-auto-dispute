@@ -1407,7 +1407,7 @@ export default function Index() {
                       ) : item.icon === "Mail" ? (
                         <a href={`mailto:${item.value}`} style={{ color: "inherit" }}>{item.value}</a>
                       ) : item.icon === "MessageCircle" ? (
-                        <a href={`tel:${item.value.replace(/\D/g, "").replace(/^8/, "7")}`} style={{ color: "inherit" }}>{item.value}</a>
+                        <a href="https://max.ru/join/ntdXg7t0QJLNlMjZz0vaeLeQio8hIF9Eesv-fcd_LOY" target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{item.value}</a>
                       ) : item.value}
                     </div>
                     <div className="text-xs" style={{ color: "var(--steel-gray)" }}>{item.sub}</div>
