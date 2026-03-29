@@ -1197,6 +1197,71 @@ export default function Index() {
 
           <div className="section-divider" />
 
+          {/* ОТЗЫВЫ */}
+          <section className="py-20 px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold text-white mb-3" style={{ fontFamily: "Oswald" }}>
+                  ОТЗЫВЫ <span style={{ color: "var(--rust-red)" }}>ПОКУПАТЕЛЕЙ</span>
+                </h2>
+                <p className="text-sm" style={{ color: "var(--steel-gray)" }}>Реальные отзывы с Авито</p>
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  {[1,2,3,4,5].map(i => (
+                    <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#FBB040" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  ))}
+                  <span className="text-white font-bold ml-1">5.0</span>
+                  <span style={{ color: "var(--steel-gray)" }} className="text-sm">· 11 отзывов</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {[
+                  { name: "Василий Балуев", date: "8 февраля", text: "Всё здорово. Через Авито доставку получил запчасти на следующий день 👍👍👍" },
+                  { name: "Рустам", date: "25 января", text: "Очень ответственный и порядочный. Вовремя встретил, передал запчасти, тем самым очень нас выручил. Очень рекомендую." },
+                  { name: "Кирилл", date: "25 января", text: "Адекватный человек, что сейчас редкость. Приятно иметь дело с такими людьми!!!" },
+                  { name: "Николай", date: "15 января", text: "Все отлично! Сделали день в день и установить успел стекло. Моя благодарность 🤝" },
+                  { name: "Дмитрий", date: "19 сентября 2025", text: "Всё чётко и быстро!!! Запчасти как на фото. Благодарю, ребят и удачи Вам!!!" },
+                  { name: "Николай Тюнин", date: "30 сентября 2025", text: "Сразу все быстро отправил, спасибо огромное!" },
+                  { name: "Валерия", date: "14 мая 2025", text: "Отзывчивый продавец, отправил товар раньше времени, очень доволен 💪" },
+                  { name: "Александр", date: "11 мая 2025", text: "Все Гуд 👍" },
+                  { name: "Евген", date: "26 января", text: "Хороший продавец" },
+                ].map((r, i) => (
+                  <div key={i} className="p-5 flex flex-col gap-3" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0" style={{ background: "var(--rust-red)" }}>
+                        {r.name[0]}
+                      </div>
+                      <div>
+                        <div className="text-white font-semibold text-sm">{r.name}</div>
+                        <div className="text-xs" style={{ color: "var(--steel-gray)" }}>{r.date}</div>
+                      </div>
+                      <div className="ml-auto flex gap-0.5">
+                        {[1,2,3,4,5].map(s => (
+                          <svg key={s} width="13" height="13" viewBox="0 0 24 24" fill="#FBB040" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                          </svg>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--chrome)" }}>{r.text}</p>
+                    <div className="text-xs mt-auto pt-2" style={{ color: "var(--steel-gray)", borderTop: "1px solid var(--metal-shine)" }}>
+                      Запчасти Форд Эксплорер · Авито
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center mt-8">
+                <a href="https://www.avito.ru/profile/rating?page_from=profile_menu" target="_blank" rel="noopener noreferrer"
+                  className="text-sm underline" style={{ color: "var(--steel-gray)" }}>
+                  Все отзывы на Авито →
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <div className="section-divider" />
+
           {/* CTA */}
           <section className="relative py-24 overflow-hidden">
             <div className="absolute inset-0">
