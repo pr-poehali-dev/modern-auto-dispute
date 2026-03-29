@@ -214,8 +214,8 @@ export default function Index() {
 
             <div className="hidden md:flex items-center gap-2">
               <Icon name="Phone" size={14} style={{ color: "var(--rust-red)" }} />
-              <a href="tel:+78001234567" className="text-sm font-medium" style={{ color: "var(--chrome)", fontFamily: "Oswald", letterSpacing: "0.05em" }}>
-                8 800 123-45-67
+              <a href="tel:+79057108890" className="text-sm font-medium" style={{ color: "var(--chrome)", fontFamily: "Oswald", letterSpacing: "0.05em" }}>
+                +7 (905) 710-88-90
               </a>
             </div>
 
@@ -230,7 +230,7 @@ export default function Index() {
             {(["home", "request", "contacts"] as Page[]).map(p => (
               <button key={p} onClick={() => nav(p)} className={`nav-link text-left ${page === p ? "active" : ""}`}>{navLabels[p]}</button>
             ))}
-            <a href="tel:+78001234567" className="text-sm font-semibold" style={{ color: "var(--rust-orange)", fontFamily: "Oswald" }}>8 800 123-45-67</a>
+            <a href="tel:+79057108890" className="text-sm font-semibold" style={{ color: "var(--rust-orange)", fontFamily: "Oswald" }}>+7 (905) 710-88-90</a>
           </div>
         )}
       </nav>
@@ -524,10 +524,10 @@ export default function Index() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
               {[
-                { icon: "Phone", label: "Телефон", value: "8 800 123-45-67", sub: "Бесплатно по РФ • Пн–Вс 8:00–20:00" },
-                { icon: "MessageCircle", label: "WhatsApp / Telegram", value: "+7 (900) 123-45-67", sub: "Ответ в течение 15 минут" },
-                { icon: "MapPin", label: "Адрес", value: "г. Москва, ул. Промышленная, 45", sub: "Пн–Сб 8:00–20:00 • Вс 9:00–17:00" },
-                { icon: "Mail", label: "Email", value: "info@metallchast.ru", sub: "Для юридических лиц и опта" },
+                { icon: "Phone", label: "Телефон", value: "+7 (905) 710-88-90", sub: "Пн–Вс 8:00–20:00" },
+                { icon: "MessageCircle", label: "ВКонтакте", value: "+7 (905) 710-88-90", sub: "Ответ в течение 15 минут" },
+                { icon: "MapPin", label: "Адрес", value: "Московская обл., Кубинка, Наро-Фоминское ш., д. 4", sub: "Пн–Сб 8:00–20:00 • Вс 9:00–17:00" },
+                { icon: "Mail", label: "Email", value: "pruddzen@gmail.com", sub: "Для юридических лиц и опта" },
               ].map((item, i) => (
                 <div key={i} className="flex gap-4 p-5" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
                   <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center" style={{ background: "rgba(192,57,43,0.12)", border: "1px solid rgba(192,57,43,0.3)" }}>
@@ -544,7 +544,7 @@ export default function Index() {
               <div className="flex flex-col items-center justify-center gap-3" style={{ height: 200, background: "var(--metal-mid)", border: "1px solid var(--metal-shine)", position: "relative", overflow: "hidden" }}>
                 <div className="absolute inset-0 hero-grid opacity-30" />
                 <Icon name="MapPin" size={36} style={{ color: "var(--rust-red)", position: "relative" }} />
-                <div className="relative text-white font-semibold text-sm" style={{ fontFamily: "Oswald" }}>г. Москва, ул. Промышленная, 45</div>
+                <div className="relative text-white font-semibold text-sm" style={{ fontFamily: "Oswald" }}>Московская обл., Кубинка, Наро-Фоминское ш., д. 4</div>
                 <div className="relative text-xs" style={{ color: "var(--steel-gray)" }}>Карта подключается по запросу</div>
               </div>
             </div>
@@ -559,8 +559,8 @@ export default function Index() {
               </button>
               <div className="text-center mt-auto">
                 <p className="text-xs mb-3" style={{ color: "var(--steel-gray)" }}>или позвоните сразу</p>
-                <a href="tel:+78001234567" className="text-2xl font-bold" style={{ fontFamily: "Oswald", color: "var(--rust-orange)", letterSpacing: "0.05em" }}>
-                  8 800 123-45-67
+                <a href="tel:+79057108890" className="text-2xl font-bold" style={{ fontFamily: "Oswald", color: "var(--rust-orange)", letterSpacing: "0.05em" }}>
+                  +7 (905) 710-88-90
                 </a>
               </div>
             </div>
@@ -616,7 +616,7 @@ export default function Index() {
               },
               {
                 title: "9. Контакты",
-                text: "По всем вопросам, связанным с обработкой персональных данных, обращайтесь: телефон 8 800 123-45-67, email info@metallchast.ru, адрес: г. Москва, ул. Промышленная, 45.",
+                text: "По всем вопросам, связанным с обработкой персональных данных, обращайтесь: телефон +7 (905) 710-88-90, email pruddzen@gmail.com, адрес: Московская обл., Кубинка, Наро-Фоминское ш., д. 4.",
               },
             ].map((section, i) => (
               <div key={i} className="p-5" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
@@ -655,7 +655,7 @@ export default function Index() {
               <div className="text-sm space-y-1" style={{ color: "var(--steel-gray)", fontFamily: "Roboto" }}>
                 <p>Пн–Сб: 8:00 — 20:00</p>
                 <p>Вс: 9:00 — 17:00</p>
-                <p className="mt-3 font-medium" style={{ color: "var(--chrome)" }}>8 800 123-45-67</p>
+                <p className="mt-3 font-medium" style={{ color: "var(--chrome)" }}>+7 (905) 710-88-90</p>
               </div>
             </div>
           </div>
