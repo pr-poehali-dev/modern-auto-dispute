@@ -5,7 +5,7 @@ const HERO_BG = "https://cdn.poehali.dev/projects/d712c762-63b0-49d0-9843-525135
 const PARTS_BG = "https://cdn.poehali.dev/projects/d712c762-63b0-49d0-9843-525135dcbeff/files/93ac4e93-ccfd-49b9-9c20-1d380c8e8cb9.jpg";
 const API_URL = "https://functions.poehali.dev/7f90d170-c74d-4482-a06b-1bb83d4c98f4";
 
-type Page = "home" | "request" | "contacts";
+type Page = "home" | "request" | "contacts" | "privacy";
 
 // База марок → моделей → поколений
 const CAR_DB: Record<string, Record<string, string[]>> = {
@@ -136,7 +136,7 @@ export default function Index() {
 
   const nav = (p: Page) => { setPage(p); setMobileMenu(false); window.scrollTo(0, 0); };
 
-  const navLabels: Record<Page, string> = { home: "Главная", request: "Найти запчасть", contacts: "Контакты" };
+  const navLabels: Record<Page, string> = { home: "Главная", request: "Найти запчасть", contacts: "Контакты", privacy: "Политика конфиденциальности" };
 
   const models = form.make ? Object.keys(CAR_DB[form.make] || {}).sort() : [];
   const generations = form.make && form.model ? (CAR_DB[form.make]?.[form.model] || []) : [];
@@ -503,7 +503,10 @@ export default function Index() {
               </button>
 
               <p className="text-center text-xs mt-4" style={{ color: "var(--steel-gray)" }}>
-                Нажимая кнопку, вы соглашаетесь на обработку персональных данных
+                Нажимая кнопку, вы соглашаетесь на{" "}
+                <button onClick={() => nav("privacy")} className="underline hover:text-white transition-colors" style={{ color: "var(--rust-orange)" }}>
+                  обработку персональных данных
+                </button>
               </p>
             </form>
           )}
@@ -565,6 +568,70 @@ export default function Index() {
         </div>
       )}
 
+      {/* ─── PRIVACY ─── */}
+      {page === "privacy" && (
+        <div className="max-w-3xl mx-auto px-4 sm:px-8 py-12">
+          <button onClick={() => nav("home")} className="flex items-center gap-2 mb-8 text-sm hover:text-white transition-colors" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>
+            <Icon name="ArrowLeft" size={16} /> НАЗАД
+          </button>
+
+          <h1 className="section-title text-3xl font-bold text-white mb-8">Политика конфиденциальности</h1>
+
+          <div className="space-y-6 text-sm leading-relaxed" style={{ color: "var(--chrome)", fontFamily: "Roboto", fontWeight: 300 }}>
+
+            <p style={{ color: "var(--steel-gray)" }}>Дата вступления в силу: 1 января 2024 г.</p>
+
+            {[
+              {
+                title: "1. Общие положения",
+                text: "Настоящая Политика конфиденциальности описывает, как ИП МеталлЧасть (далее — «Оператор») собирает, использует и защищает персональные данные пользователей сайта. Используя сайт и оставляя заявку, вы соглашаетесь с условиями настоящей Политики.",
+              },
+              {
+                title: "2. Какие данные мы собираем",
+                text: "При заполнении формы обратной связи мы собираем: имя пользователя, номер телефона, информацию об автомобиле (марка, модель, поколение), наименование запрашиваемой запчасти, комментарий (если указан). Мы не собираем платёжные данные, паспортные данные или иную чувствительную информацию.",
+              },
+              {
+                title: "3. Цели обработки данных",
+                text: "Собранные данные используются исключительно для: обратного звонка менеджера с целью уточнения наличия запчасти, подбора необходимой детали и консультации по стоимости и срокам. Мы не используем ваши данные для рекламных рассылок без вашего отдельного согласия.",
+              },
+              {
+                title: "4. Передача данных третьим лицам",
+                text: "Оператор не передаёт персональные данные третьим лицам, за исключением случаев, предусмотренных законодательством Российской Федерации. Данные не продаются и не используются в коммерческих целях.",
+              },
+              {
+                title: "5. Хранение и защита данных",
+                text: "Персональные данные хранятся на защищённых серверах и передаются по зашифрованному каналу (HTTPS). Доступ к данным имеют только уполномоченные сотрудники. Срок хранения данных — не более 1 года с момента подачи заявки.",
+              },
+              {
+                title: "6. Права пользователя",
+                text: "Вы вправе в любой момент запросить информацию о хранящихся данных, потребовать их изменения или удаления. Для этого свяжитесь с нами по email или телефону, указанным в разделе «Контакты».",
+              },
+              {
+                title: "7. Cookies",
+                text: "Сайт может использовать cookie-файлы для анализа посещаемости и улучшения работы сервиса. Cookie не содержат персональных данных. Вы можете отключить cookies в настройках браузера.",
+              },
+              {
+                title: "8. Изменения политики",
+                text: "Оператор вправе вносить изменения в настоящую Политику. Актуальная версия всегда доступна на данной странице сайта. Продолжение использования сайта после изменений означает ваше согласие с новой редакцией.",
+              },
+              {
+                title: "9. Контакты",
+                text: "По всем вопросам, связанным с обработкой персональных данных, обращайтесь: телефон 8 800 123-45-67, email info@metallchast.ru, адрес: г. Москва, ул. Промышленная, 45.",
+              },
+            ].map((section, i) => (
+              <div key={i} className="p-5" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+                <h3 className="font-bold text-white mb-3" style={{ fontFamily: "Oswald", fontSize: "1rem" }}>{section.title}</h3>
+                <p>{section.text}</p>
+              </div>
+            ))}
+
+            <div className="pt-4 text-center">
+              <button className="btn-primary" onClick={() => nav("request")}>Вернуться к заявке</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── FOOTER ─── */}
       <footer className="mt-20" style={{ background: "#080808", borderTop: "2px solid var(--rust-red)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10">
@@ -592,8 +659,11 @@ export default function Index() {
               </div>
             </div>
           </div>
-          <div style={{ borderTop: "1px solid var(--metal-shine)", paddingTop: "1.5rem" }}>
-            <p className="text-xs text-center" style={{ color: "var(--steel-gray)" }}>© 2024 МеталлЧасть. Все права защищены.</p>
+          <div style={{ borderTop: "1px solid var(--metal-shine)", paddingTop: "1.5rem" }} className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-xs" style={{ color: "var(--steel-gray)" }}>© 2024 МеталлЧасть. Все права защищены.</p>
+            <button onClick={() => nav("privacy")} className="text-xs underline hover:text-white transition-colors" style={{ color: "var(--steel-gray)" }}>
+              Политика конфиденциальности
+            </button>
           </div>
         </div>
       </footer>
