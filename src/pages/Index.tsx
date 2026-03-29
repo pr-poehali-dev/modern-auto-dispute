@@ -1087,7 +1087,7 @@ export default function Index() {
                 </h1>
 
                 <p className="fade-in-delay-2 text-base sm:text-lg mb-10 max-w-xl" style={{ color: "var(--chrome)", fontFamily: "Roboto", fontWeight: 300, lineHeight: 1.7 }}>
-                  Оставьте заявку — менеджер перезвонит, уточнит наличие и подберёт нужную деталь. Разборка легковых и коммерческих авто. Гарантия 30 дней.
+                  Оставьте заявку — менеджер перезвонит, уточнит наличие и подберёт нужную деталь. Разборка легковых и коммерческих авто. Гарантия 14 дней.
                 </p>
 
                 <div className="fade-in-delay-3 flex flex-wrap gap-4">
