@@ -1401,7 +1401,15 @@ export default function Index() {
                   </div>
                   <div>
                     <div className="text-xs tracking-wider mb-1" style={{ color: "var(--steel-gray)", fontFamily: "Oswald" }}>{item.label}</div>
-                    <div className="text-white font-semibold mb-0.5" style={{ fontFamily: "Oswald" }}>{item.value}</div>
+                    <div className="text-white font-semibold mb-0.5" style={{ fontFamily: "Oswald" }}>
+                      {item.icon === "Phone" ? (
+                        <a href={`tel:${item.value.replace(/\D/g, "").replace(/^8/, "7")}`} style={{ color: "inherit" }}>{item.value}</a>
+                      ) : item.icon === "Mail" ? (
+                        <a href={`mailto:${item.value}`} style={{ color: "inherit" }}>{item.value}</a>
+                      ) : item.icon === "MessageCircle" ? (
+                        <a href={`tel:${item.value.replace(/\D/g, "").replace(/^8/, "7")}`} style={{ color: "inherit" }}>{item.value}</a>
+                      ) : item.value}
+                    </div>
                     <div className="text-xs" style={{ color: "var(--steel-gray)" }}>{item.sub}</div>
                   </div>
                 </div>
