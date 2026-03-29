@@ -1090,6 +1090,20 @@ export default function Index() {
                   Оставьте заявку — менеджер перезвонит, уточнит наличие и подберёт нужную деталь. Разборка легковых и коммерческих авто. Гарантия 14 дней.
                 </p>
 
+                <div className="fade-in-delay-3 flex flex-wrap items-center gap-4 mb-6">
+                  <a href="#reviews" className="flex items-center gap-2 px-4 py-2 rounded" style={{ background: "rgba(251,176,64,0.12)", border: "1px solid rgba(251,176,64,0.3)", textDecoration: "none" }}>
+                    <div className="flex gap-0.5">
+                      {[1,2,3,4,5].map(i => (
+                        <svg key={i} width="15" height="15" viewBox="0 0 24 24" fill="#FBB040" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                      ))}
+                    </div>
+                    <span className="text-sm font-bold" style={{ color: "#FBB040" }}>5.0</span>
+                    <span className="text-xs" style={{ color: "var(--steel-gray)" }}>· 11 отзывов на Авито</span>
+                  </a>
+                </div>
+
                 <div className="fade-in-delay-3 flex flex-wrap gap-4">
                   <button className="btn-primary" onClick={() => nav("request")}>Найти запчасть</button>
                   <button className="btn-secondary" onClick={() => nav("contacts")}>Позвонить нам</button>
@@ -1198,7 +1212,7 @@ export default function Index() {
           <div className="section-divider" />
 
           {/* ОТЗЫВЫ */}
-          <section className="py-20 px-4">
+          <section id="reviews" className="py-20 px-4">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-4xl font-bold text-white mb-3" style={{ fontFamily: "Oswald" }}>
