@@ -1,0 +1,1 @@
+UPDATE t_p8332130_modern_auto_dispute.users SET is_admin = true WHERE email = 'ruslan399885@gmail.com';
