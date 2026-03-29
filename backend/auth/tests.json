@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "POST login bad credentials",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "login", "email": "no@no.com", "password": "wrong"},
+      "expectedStatus": 404
+    },
+    {
+      "name": "GET root",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 404
+    }
+  ]
+}

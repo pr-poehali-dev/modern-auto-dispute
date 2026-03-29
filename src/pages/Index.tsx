@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Icon from "@/components/ui/icon";
+
+const AUTH_URL = "https://functions.poehali.dev/d2f033ac-6535-4d23-86c5-e0425d7d5205";
+const REVIEWS_URL = "https://functions.poehali.dev/4a97a8d5-ec75-441c-bf2e-a8b4dce35685";
+
+interface User { id: number; email: string; name: string; phone?: string; is_admin: boolean; }
+interface Review { id: number; author_name: string; rating: number; text: string; photo_url?: string; created_at: string; status?: string; }
 
 const HERO_BG = "https://cdn.poehali.dev/projects/d712c762-63b0-49d0-9843-525135dcbeff/files/2e306825-116f-4f90-b8fe-14174863d64d.jpg";
 const PARTS_BG = "https://cdn.poehali.dev/projects/d712c762-63b0-49d0-9843-525135dcbeff/files/93ac4e93-ccfd-49b9-9c20-1d380c8e8cb9.jpg";
 const API_URL = "https://functions.poehali.dev/7f90d170-c74d-4482-a06b-1bb83d4c98f4";
 
-type Page = "home" | "request" | "contacts" | "privacy";
+type Page = "home" | "request" | "contacts" | "privacy" | "login" | "register" | "cabinet" | "admin";
 
 // Группы марок по странам для select
 const MAKES_BY_COUNTRY: Record<string, string[]> = {
@@ -959,9 +965,144 @@ export default function Index() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
+  // Auth state
+  const [user, setUser] = useState<User | null>(null);
+  const [sessionId, setSessionId] = useState<string>(() => localStorage.getItem("sid") || "");
+  const [authForm, setAuthForm] = useState({ email: "", password: "", name: "" });
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // Cabinet state
+  const [cabinetTab, setCabinetTab] = useState<"requests" | "reviews" | "write">("requests");
+  const [myRequests, setMyRequests] = useState<Record<string, unknown>[]>([]);
+  const [myReviews, setMyReviews] = useState<Review[]>([]);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, text: "", photo_b64: "" });
+  const [reviewSending, setReviewSending] = useState(false);
+  const [reviewSent, setReviewSent] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Admin state
+  const [adminReviews, setAdminReviews] = useState<Review[]>([]);
+
+  // Public reviews
+  const [publicReviews, setPublicReviews] = useState<Review[]>([]);
+
   const nav = (p: Page) => { setPage(p); setMobileMenu(false); window.scrollTo(0, 0); };
 
-  const navLabels: Record<Page, string> = { home: "Главная", request: "Найти запчасть", contacts: "Контакты", privacy: "Политика конфиденциальности" };
+  const navLabels: Record<Page, string> = { home: "Главная", request: "Найти запчасть", contacts: "Контакты", privacy: "Политика конфиденциальности", login: "Войти", register: "Регистрация", cabinet: "Личный кабинет", admin: "Модерация" };
+
+  const authHeaders = { "Content-Type": "application/json", "X-Session-Id": sessionId };
+
+  // Загрузить профиль при старте
+  useEffect(() => {
+    if (sessionId) {
+      fetch(`${AUTH_URL}/me`, { headers: authHeaders })
+        .then(r => r.json())
+        .then(d => { if (d.user) setUser(d.user); else { setSessionId(""); localStorage.removeItem("sid"); } })
+        .catch(() => {});
+    }
+  }, []);
+
+  // Загрузить публичные отзывы
+  useEffect(() => {
+    fetch(REVIEWS_URL)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setPublicReviews(d); })
+      .catch(() => {});
+  }, []);
+
+  const saveSession = (sid: string, u: User) => {
+    setSessionId(sid);
+    localStorage.setItem("sid", sid);
+    setUser(u);
+  };
+
+  const logout = async () => {
+    await fetch(`${AUTH_URL}/logout`, { method: "POST", headers: authHeaders });
+    setUser(null); setSessionId(""); localStorage.removeItem("sid"); nav("home");
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); setAuthError(""); setAuthLoading(true);
+    try {
+      const r = await fetch(`${AUTH_URL}/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: authForm.email, password: authForm.password }) });
+      const d = await r.json();
+      if (d.session_id) { saveSession(d.session_id, d.user); nav("cabinet"); }
+      else setAuthError(d.error || "Ошибка входа");
+    } catch { setAuthError("Ошибка соединения"); }
+    setAuthLoading(false);
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault(); setAuthError(""); setAuthLoading(true);
+    try {
+      const r = await fetch(`${AUTH_URL}/register`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(authForm) });
+      const d = await r.json();
+      if (d.session_id) { saveSession(d.session_id, d.user); nav("cabinet"); }
+      else setAuthError(d.error || "Ошибка регистрации");
+    } catch { setAuthError("Ошибка соединения"); }
+    setAuthLoading(false);
+  };
+
+  const loadCabinet = async () => {
+    const h = authHeaders;
+    const [reqRes, revRes] = await Promise.all([
+      fetch(`${AUTH_URL}/requests`, { headers: h }),
+      fetch(`${REVIEWS_URL}/my`, { headers: h }),
+    ]);
+    const reqs = await reqRes.json(); if (Array.isArray(reqs)) setMyRequests(reqs);
+    const revs = await revRes.json(); if (Array.isArray(revs)) setMyReviews(revs);
+  };
+
+  useEffect(() => { if (page === "cabinet" && user) loadCabinet(); }, [page, user]);
+
+  const loadAdmin = async () => {
+    const r = await fetch(`${REVIEWS_URL}/admin`, { headers: authHeaders });
+    const d = await r.json(); if (Array.isArray(d)) setAdminReviews(d);
+  };
+  useEffect(() => { if (page === "admin" && user?.is_admin) loadAdmin(); }, [page, user]);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setReviewForm(f => ({ ...f, photo_b64: (ev.target?.result as string).split(",")[1] }));
+    reader.readAsDataURL(file);
+  };
+
+  const submitReview = async (e: React.FormEvent) => {
+    e.preventDefault(); setReviewError(""); setReviewSending(true);
+    try {
+      const r = await fetch(REVIEWS_URL, { method: "POST", headers: authHeaders, body: JSON.stringify(reviewForm) });
+      const d = await r.json();
+      if (d.ok) { setReviewSent(true); setReviewForm({ rating: 5, text: "", photo_b64: "" }); loadCabinet(); }
+      else setReviewError(d.error || "Ошибка");
+    } catch { setReviewError("Ошибка соединения"); }
+    setReviewSending(false);
+  };
+
+  const moderate = async (id: number, status: "approved" | "rejected") => {
+    await fetch(`${REVIEWS_URL}/moderate`, { method: "POST", headers: authHeaders, body: JSON.stringify({ id, status }) });
+    loadAdmin();
+    // Обновить публичные отзывы
+    fetch(REVIEWS_URL).then(r => r.json()).then(d => { if (Array.isArray(d)) setPublicReviews(d); });
+  };
+
+  const StarRating = ({ value, onChange }: { value: number; onChange?: (v: number) => void }) => (
+    <div className="flex gap-1">
+      {[1,2,3,4,5].map(i => (
+        <button key={i} type="button" onClick={() => onChange?.(i)} className={onChange ? "cursor-pointer" : "cursor-default"}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill={i <= value ? "#FBB040" : "none"} stroke={i <= value ? "#FBB040" : "#666"} strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </button>
+      ))}
+    </div>
+  );
+
+  const statusLabel: Record<string, string> = { pending: "На модерации", approved: "Опубликован", rejected: "Отклонён" };
+  const statusColor: Record<string, string> = { pending: "#FBB040", approved: "#4caf50", rejected: "#c0392b" };
 
   const models = form.make ? Object.keys(CAR_DB[form.make] || {}).sort() : [];
   const generations = form.make && form.model ? (CAR_DB[form.make]?.[form.model] || []) : [];
@@ -986,7 +1127,7 @@ export default function Index() {
     try {
       const res = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Session-Id": sessionId },
         body: JSON.stringify(form),
       });
       if (res.ok) {
@@ -1037,11 +1178,29 @@ export default function Index() {
               ))}
             </div>
 
-            <div className="hidden md:flex items-center gap-2">
-              <Icon name="Phone" size={14} style={{ color: "var(--rust-red)" }} />
-              <a href="tel:+79057108890" className="text-sm font-medium" style={{ color: "var(--chrome)", fontFamily: "Oswald", letterSpacing: "0.05em" }}>
-                +7 (905) 710-88-90
-              </a>
+            <div className="hidden md:flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Icon name="Phone" size={14} style={{ color: "var(--rust-red)" }} />
+                <a href="tel:+79057108890" className="text-sm font-medium" style={{ color: "var(--chrome)", fontFamily: "Oswald", letterSpacing: "0.05em" }}>
+                  +7 (905) 710-88-90
+                </a>
+              </div>
+              {user ? (
+                <div className="flex items-center gap-2">
+                  {user.is_admin && (
+                    <button onClick={() => nav("admin")} className="text-xs px-2 py-1 rounded" style={{ background: "rgba(192,57,43,0.2)", color: "var(--rust-red)", border: "1px solid var(--rust-red)" }}>Модерация</button>
+                  )}
+                  <button onClick={() => nav("cabinet")} className="flex items-center gap-1.5 text-sm" style={{ color: "var(--chrome)" }}>
+                    <Icon name="User" size={15} />
+                    <span className="hidden lg:inline">{user.name.split(" ")[0]}</span>
+                  </button>
+                  <button onClick={logout} className="text-xs" style={{ color: "var(--steel-gray)" }}>
+                    <Icon name="LogOut" size={15} />
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => nav("login")} className="btn-secondary text-xs px-3 py-1.5">Войти</button>
+              )}
             </div>
 
             <button className="md:hidden text-gray-400 hover:text-white" onClick={() => setMobileMenu(!mobileMenu)}>
@@ -1055,6 +1214,15 @@ export default function Index() {
             {(["home", "request", "contacts"] as Page[]).map(p => (
               <button key={p} onClick={() => nav(p)} className={`nav-link text-left ${page === p ? "active" : ""}`}>{navLabels[p]}</button>
             ))}
+            {user ? (
+              <>
+                <button onClick={() => nav("cabinet")} className="nav-link text-left">Личный кабинет</button>
+                {user.is_admin && <button onClick={() => nav("admin")} className="nav-link text-left">Модерация</button>}
+                <button onClick={logout} className="text-sm text-left" style={{ color: "var(--steel-gray)" }}>Выйти</button>
+              </>
+            ) : (
+              <button onClick={() => nav("login")} className="nav-link text-left">Войти</button>
+            )}
             <a href="tel:+79057108890" className="text-sm font-semibold" style={{ color: "var(--rust-orange)", fontFamily: "Oswald" }}>+7 (905) 710-88-90</a>
           </div>
         )}
@@ -1218,7 +1386,7 @@ export default function Index() {
                 <h2 className="text-4xl font-bold text-white mb-3" style={{ fontFamily: "Oswald" }}>
                   ОТЗЫВЫ <span style={{ color: "var(--rust-red)" }}>ПОКУПАТЕЛЕЙ</span>
                 </h2>
-                <p className="text-sm" style={{ color: "var(--steel-gray)" }}>Реальные отзывы с Авито</p>
+                <p className="text-sm" style={{ color: "var(--steel-gray)" }}>Реальные отзывы покупателей</p>
                 <div className="flex items-center justify-center gap-2 mt-3">
                   {[1,2,3,4,5].map(i => (
                     <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#FBB040" xmlns="http://www.w3.org/2000/svg">
@@ -1226,20 +1394,30 @@ export default function Index() {
                     </svg>
                   ))}
                   <span className="text-white font-bold ml-1">5.0</span>
-                  <span style={{ color: "var(--steel-gray)" }} className="text-sm">· 11 отзывов</span>
+                  <span style={{ color: "var(--steel-gray)" }} className="text-sm">· {9 + publicReviews.length} отзывов</span>
                 </div>
               </div>
+
+              {/* Авито-отзывы (статичные) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[
-                  { name: "Василий Балуев", date: "8 февраля", text: "Всё здорово. Через Авито доставку получил запчасти на следующий день 👍👍👍" },
-                  { name: "Рустам", date: "25 января", text: "Очень ответственный и порядочный. Вовремя встретил, передал запчасти, тем самым очень нас выручил. Очень рекомендую." },
-                  { name: "Кирилл", date: "25 января", text: "Адекватный человек, что сейчас редкость. Приятно иметь дело с такими людьми!!!" },
-                  { name: "Николай", date: "15 января", text: "Все отлично! Сделали день в день и установить успел стекло. Моя благодарность 🤝" },
-                  { name: "Дмитрий", date: "19 сентября 2025", text: "Всё чётко и быстро!!! Запчасти как на фото. Благодарю, ребят и удачи Вам!!!" },
-                  { name: "Николай Тюнин", date: "30 сентября 2025", text: "Сразу все быстро отправил, спасибо огромное!" },
-                  { name: "Валерия", date: "14 мая 2025", text: "Отзывчивый продавец, отправил товар раньше времени, очень доволен 💪" },
-                  { name: "Александр", date: "11 мая 2025", text: "Все Гуд 👍" },
-                  { name: "Евген", date: "26 января", text: "Хороший продавец" },
+                  { name: "Василий Балуев", date: "8 февраля", text: "Всё здорово. Через Авито доставку получил запчасти на следующий день 👍👍👍", source: "Авито" },
+                  { name: "Рустам", date: "25 января", text: "Очень ответственный и порядочный. Вовремя встретил, передал запчасти, тем самым очень нас выручил. Очень рекомендую.", source: "Авито" },
+                  { name: "Кирилл", date: "25 января", text: "Адекватный человек, что сейчас редкость. Приятно иметь дело с такими людьми!!!", source: "Авито" },
+                  { name: "Николай", date: "15 января", text: "Все отлично! Сделали день в день и установить успел стекло. Моя благодарность 🤝", source: "Авито" },
+                  { name: "Дмитрий", date: "19 сентября 2025", text: "Всё чётко и быстро!!! Запчасти как на фото. Благодарю, ребят и удачи Вам!!!", source: "Авито" },
+                  { name: "Николай Тюнин", date: "30 сентября 2025", text: "Сразу все быстро отправил, спасибо огромное!", source: "Авито" },
+                  { name: "Валерия", date: "14 мая 2025", text: "Отзывчивый продавец, отправил товар раньше времени, очень доволен 💪", source: "Авито" },
+                  { name: "Александр", date: "11 мая 2025", text: "Все Гуд 👍", source: "Авито" },
+                  { name: "Евген", date: "26 января", text: "Хороший продавец", source: "Авито" },
+                  ...publicReviews.map(r => ({
+                    name: r.author_name,
+                    date: new Date(r.created_at).toLocaleDateString("ru-RU"),
+                    text: r.text,
+                    source: "Сайт",
+                    rating: r.rating,
+                    photo_url: r.photo_url,
+                  }))
                 ].map((r, i) => (
                   <div key={i} className="p-5 flex flex-col gap-3" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
                     <div className="flex items-center gap-3">
@@ -1252,24 +1430,36 @@ export default function Index() {
                       </div>
                       <div className="ml-auto flex gap-0.5">
                         {[1,2,3,4,5].map(s => (
-                          <svg key={s} width="13" height="13" viewBox="0 0 24 24" fill="#FBB040" xmlns="http://www.w3.org/2000/svg">
+                          <svg key={s} width="13" height="13" viewBox="0 0 24 24" fill={s <= (('rating' in r && r.rating) ? r.rating : 5) ? "#FBB040" : "none"} stroke="#FBB040" strokeWidth="1" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                           </svg>
                         ))}
                       </div>
                     </div>
                     <p className="text-sm leading-relaxed" style={{ color: "var(--chrome)" }}>{r.text}</p>
-                    <div className="text-xs mt-auto pt-2" style={{ color: "var(--steel-gray)", borderTop: "1px solid var(--metal-shine)" }}>
-                      Запчасти Форд Эксплорер · Авито
+                    {'photo_url' in r && r.photo_url && <img src={r.photo_url} alt="фото" className="rounded max-h-40 object-cover" />}
+                    <div className="text-xs mt-auto pt-2 flex items-center justify-between" style={{ color: "var(--steel-gray)", borderTop: "1px solid var(--metal-shine)" }}>
+                      <span>{r.source === "Авито" ? "Запчасти Форд Эксплорер" : "Покупатель сайта"}</span>
+                      <span style={{ color: r.source === "Авито" ? "#6bc5f8" : "var(--rust-orange)" }}>· {r.source}</span>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="text-center mt-8">
+
+              <div className="text-center mt-10 flex flex-wrap items-center justify-center gap-5">
                 <a href="https://www.avito.ru/profile/rating?page_from=profile_menu" target="_blank" rel="noopener noreferrer"
                   className="text-sm underline" style={{ color: "var(--steel-gray)" }}>
                   Все отзывы на Авито →
                 </a>
+                {user ? (
+                  <button onClick={() => { nav("cabinet"); setCabinetTab("write"); }} className="btn-primary text-sm px-5 py-2">
+                    Оставить отзыв
+                  </button>
+                ) : (
+                  <button onClick={() => nav("login")} className="btn-primary text-sm px-5 py-2">
+                    Оставить отзыв
+                  </button>
+                )}
               </div>
             </div>
           </section>
@@ -1582,6 +1772,261 @@ export default function Index() {
               <button className="btn-primary" onClick={() => nav("request")}>Вернуться к заявке</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ─── LOGIN ─── */}
+      {page === "login" && (
+        <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+          <div className="w-full max-w-md">
+            <div className="p-8" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+              <h2 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "Oswald" }}>ВХОД В КАБИНЕТ</h2>
+              <p className="text-sm mb-6" style={{ color: "var(--steel-gray)" }}>Войдите чтобы оставить отзыв и смотреть историю заявок</p>
+              <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel-gray)" }}>Email</label>
+                  <input type="email" required value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))}
+                    className="w-full px-4 py-3 text-white text-sm outline-none" style={{ background: "var(--metal-light)", border: "1px solid var(--metal-shine)" }} placeholder="your@email.com" />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel-gray)" }}>Пароль</label>
+                  <input type="password" required value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))}
+                    className="w-full px-4 py-3 text-white text-sm outline-none" style={{ background: "var(--metal-light)", border: "1px solid var(--metal-shine)" }} placeholder="••••••" />
+                </div>
+                {authError && <p className="text-sm" style={{ color: "var(--rust-red)" }}>{authError}</p>}
+                <button type="submit" className="btn-primary w-full" disabled={authLoading}>{authLoading ? "Входим..." : "Войти"}</button>
+                <div className="text-center">
+                  <a href="https://web.max.ru/" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-80"
+                    style={{ background: "#7B5FCC", border: "1px solid #9B7FEC" }}>
+                    <Icon name="MessageCircle" size={16} />
+                    Войти через Max
+                  </a>
+                </div>
+                <p className="text-center text-xs" style={{ color: "var(--steel-gray)" }}>
+                  Нет аккаунта?{" "}
+                  <button type="button" onClick={() => { setAuthError(""); nav("register"); }} className="underline" style={{ color: "var(--rust-orange)" }}>Зарегистрироваться</button>
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── REGISTER ─── */}
+      {page === "register" && (
+        <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+          <div className="w-full max-w-md">
+            <div className="p-8" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+              <h2 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "Oswald" }}>РЕГИСТРАЦИЯ</h2>
+              <p className="text-sm mb-6" style={{ color: "var(--steel-gray)" }}>Создайте аккаунт чтобы оставить отзыв</p>
+              <form onSubmit={handleRegister} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel-gray)" }}>Ваше имя</label>
+                  <input type="text" required value={authForm.name} onChange={e => setAuthForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full px-4 py-3 text-white text-sm outline-none" style={{ background: "var(--metal-light)", border: "1px solid var(--metal-shine)" }} placeholder="Иван Петров" />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel-gray)" }}>Email</label>
+                  <input type="email" required value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))}
+                    className="w-full px-4 py-3 text-white text-sm outline-none" style={{ background: "var(--metal-light)", border: "1px solid var(--metal-shine)" }} placeholder="your@email.com" />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel-gray)" }}>Пароль</label>
+                  <input type="password" required minLength={6} value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))}
+                    className="w-full px-4 py-3 text-white text-sm outline-none" style={{ background: "var(--metal-light)", border: "1px solid var(--metal-shine)" }} placeholder="Минимум 6 символов" />
+                </div>
+                {authError && <p className="text-sm" style={{ color: "var(--rust-red)" }}>{authError}</p>}
+                <button type="submit" className="btn-primary w-full" disabled={authLoading}>{authLoading ? "Регистрируемся..." : "Создать аккаунт"}</button>
+                <div className="text-center">
+                  <a href="https://web.max.ru/" target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-80"
+                    style={{ background: "#7B5FCC", border: "1px solid #9B7FEC" }}>
+                    <Icon name="MessageCircle" size={16} />
+                    Войти через Max
+                  </a>
+                </div>
+                <p className="text-center text-xs" style={{ color: "var(--steel-gray)" }}>
+                  Уже есть аккаунт?{" "}
+                  <button type="button" onClick={() => { setAuthError(""); nav("login"); }} className="underline" style={{ color: "var(--rust-orange)" }}>Войти</button>
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── ЛИЧНЫЙ КАБИНЕТ ─── */}
+      {page === "cabinet" && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-12">
+          {!user ? (
+            <div className="text-center py-20">
+              <p className="text-white mb-4">Необходима авторизация</p>
+              <button className="btn-primary" onClick={() => nav("login")}>Войти</button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Oswald" }}>ЛИЧНЫЙ КАБИНЕТ</h1>
+                  <p className="text-sm mt-1" style={{ color: "var(--steel-gray)" }}>{user.email}</p>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ background: "var(--rust-red)" }}>
+                    {user.name[0]}
+                  </div>
+                  <span className="text-white text-sm font-medium">{user.name}</span>
+                </div>
+              </div>
+
+              {/* Табы */}
+              <div className="flex gap-0 mb-8 border-b" style={{ borderColor: "var(--metal-shine)" }}>
+                {([["requests", "История заявок"], ["reviews", "Мои отзывы"], ["write", "Написать отзыв"]] as const).map(([tab, label]) => (
+                  <button key={tab} onClick={() => setCabinetTab(tab)}
+                    className="px-5 py-3 text-sm font-medium transition-colors"
+                    style={{ color: cabinetTab === tab ? "white" : "var(--steel-gray)", borderBottom: cabinetTab === tab ? "2px solid var(--rust-red)" : "2px solid transparent", marginBottom: "-1px" }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* История заявок */}
+              {cabinetTab === "requests" && (
+                <div className="space-y-4">
+                  {myRequests.length === 0 ? (
+                    <div className="text-center py-12" style={{ color: "var(--steel-gray)" }}>
+                      <Icon name="ClipboardList" size={40} className="mx-auto mb-3 opacity-30" />
+                      <p>Заявок пока нет</p>
+                      <button className="btn-primary mt-4 text-sm" onClick={() => nav("request")}>Оставить заявку</button>
+                    </div>
+                  ) : myRequests.map((r, i) => (
+                    <div key={i} className="p-5" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-white font-semibold">{String(r.part || "Запчасть не указана")}</p>
+                          <p className="text-sm mt-1" style={{ color: "var(--steel-gray)" }}>
+                            {[r.make, r.model, r.generation].filter(Boolean).join(" · ") || "Автомобиль не указан"}
+                          </p>
+                          {r.comment && <p className="text-sm mt-2" style={{ color: "var(--chrome)" }}>{String(r.comment)}</p>}
+                        </div>
+                        <span className="text-xs flex-shrink-0" style={{ color: "var(--steel-gray)" }}>
+                          {new Date(String(r.created_at)).toLocaleDateString("ru-RU")}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Мои отзывы */}
+              {cabinetTab === "reviews" && (
+                <div className="space-y-4">
+                  {myReviews.length === 0 ? (
+                    <div className="text-center py-12" style={{ color: "var(--steel-gray)" }}>
+                      <Icon name="Star" size={40} className="mx-auto mb-3 opacity-30" />
+                      <p>Отзывов пока нет</p>
+                      <button className="btn-primary mt-4 text-sm" onClick={() => setCabinetTab("write")}>Написать отзыв</button>
+                    </div>
+                  ) : myReviews.map(r => (
+                    <div key={r.id} className="p-5" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
+                      <div className="flex items-center justify-between mb-3">
+                        <StarRating value={r.rating} />
+                        <span className="text-xs px-2 py-0.5 rounded" style={{ background: `${statusColor[r.status || "pending"]}22`, color: statusColor[r.status || "pending"], border: `1px solid ${statusColor[r.status || "pending"]}44` }}>
+                          {statusLabel[r.status || "pending"]}
+                        </span>
+                      </div>
+                      <p className="text-sm" style={{ color: "var(--chrome)" }}>{r.text}</p>
+                      {r.photo_url && <img src={r.photo_url} alt="фото" className="mt-3 rounded max-h-40 object-cover" />}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Написать отзыв */}
+              {cabinetTab === "write" && (
+                <div className="max-w-xl">
+                  {reviewSent ? (
+                    <div className="text-center py-12">
+                      <Icon name="CheckCircle" size={48} className="mx-auto mb-4" style={{ color: "#4caf50" }} />
+                      <p className="text-white text-lg font-semibold">Отзыв отправлен на модерацию</p>
+                      <p className="text-sm mt-2" style={{ color: "var(--steel-gray)" }}>После проверки он появится на сайте</p>
+                      <button className="btn-primary mt-6" onClick={() => { setReviewSent(false); setCabinetTab("reviews"); }}>Мои отзывы</button>
+                    </div>
+                  ) : (
+                    <form onSubmit={submitReview} className="flex flex-col gap-5">
+                      <div>
+                        <label className="block text-xs mb-2" style={{ color: "var(--steel-gray)" }}>Оценка</label>
+                        <StarRating value={reviewForm.rating} onChange={v => setReviewForm(f => ({ ...f, rating: v }))} />
+                      </div>
+                      <div>
+                        <label className="block text-xs mb-1" style={{ color: "var(--steel-gray)" }}>Текст отзыва</label>
+                        <textarea required rows={5} value={reviewForm.text} onChange={e => setReviewForm(f => ({ ...f, text: e.target.value }))}
+                          placeholder="Расскажите о вашем опыте покупки..."
+                          className="w-full px-4 py-3 text-white text-sm outline-none resize-none" style={{ background: "var(--metal-light)", border: "1px solid var(--metal-shine)" }} />
+                      </div>
+                      <div>
+                        <label className="block text-xs mb-1" style={{ color: "var(--steel-gray)" }}>Фото (необязательно)</label>
+                        <input type="file" ref={fileInputRef} accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                        <button type="button" onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center gap-2 px-4 py-2 text-sm" style={{ color: "var(--chrome)", background: "var(--metal-light)", border: "1px solid var(--metal-shine)" }}>
+                          <Icon name="Image" size={15} />
+                          {reviewForm.photo_b64 ? "Фото выбрано ✓" : "Прикрепить фото"}
+                        </button>
+                      </div>
+                      {reviewError && <p className="text-sm" style={{ color: "var(--rust-red)" }}>{reviewError}</p>}
+                      <button type="submit" className="btn-primary w-full" disabled={reviewSending}>{reviewSending ? "Отправляем..." : "Отправить отзыв"}</button>
+                    </form>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ─── МОДЕРАЦИЯ (ADMIN) ─── */}
+      {page === "admin" && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-12">
+          {!user?.is_admin ? (
+            <div className="text-center py-20" style={{ color: "var(--steel-gray)" }}>Доступ запрещён</div>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "Oswald" }}>МОДЕРАЦИЯ ОТЗЫВОВ</h1>
+              <p className="text-sm mb-8" style={{ color: "var(--steel-gray)" }}>Проверьте отзывы перед публикацией на сайте</p>
+              <div className="space-y-4">
+                {adminReviews.length === 0 && <p style={{ color: "var(--steel-gray)" }}>Отзывов нет</p>}
+                {adminReviews.map(r => (
+                  <div key={r.id} className="p-5" style={{ background: "var(--metal-mid)", border: `1px solid ${r.status === "pending" ? "var(--rust-orange)" : "var(--metal-shine)"}` }}>
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div>
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="text-white font-semibold">{r.author_name}</span>
+                          <StarRating value={r.rating} />
+                          <span className="text-xs px-2 py-0.5 rounded" style={{ background: `${statusColor[r.status || "pending"]}22`, color: statusColor[r.status || "pending"] }}>
+                            {statusLabel[r.status || "pending"]}
+                          </span>
+                        </div>
+                        <p className="text-xs" style={{ color: "var(--steel-gray)" }}>{new Date(r.created_at).toLocaleString("ru-RU")}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm mb-3" style={{ color: "var(--chrome)" }}>{r.text}</p>
+                    {r.photo_url && <img src={r.photo_url} alt="фото" className="mb-3 rounded max-h-48 object-cover" />}
+                    {r.status === "pending" && (
+                      <div className="flex gap-3 pt-3" style={{ borderTop: "1px solid var(--metal-shine)" }}>
+                        <button onClick={() => moderate(r.id, "approved")} className="btn-primary text-sm px-4 py-2 flex items-center gap-1.5">
+                          <Icon name="Check" size={14} /> Одобрить
+                        </button>
+                        <button onClick={() => moderate(r.id, "rejected")}
+                          className="text-sm px-4 py-2 flex items-center gap-1.5" style={{ background: "rgba(192,57,43,0.15)", border: "1px solid var(--rust-red)", color: "var(--rust-red)" }}>
+                          <Icon name="X" size={14} /> Отклонить
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 

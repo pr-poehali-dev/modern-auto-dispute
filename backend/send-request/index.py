@@ -1,16 +1,47 @@
-"""Отправка заявки с сайта разборки автомобилей на email менеджера"""
+"""Отправка заявки с сайта разборки автомобилей на email менеджера и сохранение в БД"""
 import json
 import os
 import smtplib
+import psycopg2
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+SCHEMA = os.environ.get('MAIN_DB_SCHEMA', 't_p8332130_modern_auto_dispute')
+
+def get_user_by_session(session_id):
+    if not session_id:
+        return None
+    try:
+        conn = psycopg2.connect(os.environ['DATABASE_URL'], options=f'-c search_path={SCHEMA}')
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT u.id FROM sessions s JOIN users u ON s.user_id = u.id
+                WHERE s.id = %s AND s.expires_at > NOW()
+            """, (session_id,))
+            row = cur.fetchone()
+        conn.close()
+        return row[0] if row else None
+    except Exception:
+        return None
+
+def save_request(user_id, name, phone, make, model, generation, part_desc, comment):
+    try:
+        conn = psycopg2.connect(os.environ['DATABASE_URL'], options=f'-c search_path={SCHEMA}')
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO requests (user_id, name, phone, make, model, generation, part, comment)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (user_id, name, phone, make, model, generation, part_desc, comment))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"DB save error: {e}")
 
 def handler(event: dict, context) -> dict:
     cors_headers = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers": "Content-Type, X-Session-Id",
     }
 
     if event.get("httpMethod") == "OPTIONS":
@@ -20,6 +51,10 @@ def handler(event: dict, context) -> dict:
         body = json.loads(event.get("body") or "{}")
     except Exception:
         return {"statusCode": 400, "headers": cors_headers, "body": json.dumps({"error": "Invalid JSON"})}
+
+    headers = event.get("headers") or {}
+    session_id = headers.get("x-session-id") or headers.get("X-Session-Id", "")
+    user_id = get_user_by_session(session_id)
 
     name = body.get("name", "").strip()
     phone = body.get("phone", "").strip()
@@ -85,13 +120,14 @@ def handler(event: dict, context) -> dict:
     msg["To"] = to_email
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
+    save_request(user_id, name, phone, make, model, generation, part_desc, comment)
+
     try:
         with smtplib.SMTP("smtp.poehali.dev", 587, timeout=15) as smtp:
             smtp.starttls()
             smtp.login("noreply@poehali.dev", os.environ.get("SMTP_PASSWORD", "poehali"))
             smtp.sendmail("noreply@poehali.dev", to_email, msg.as_string())
     except Exception as e:
-        # fallback — логируем, но не падаем с ошибкой для пользователя
         print(f"SMTP error: {e}")
 
     return {
