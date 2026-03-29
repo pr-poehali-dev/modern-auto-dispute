@@ -1426,7 +1426,7 @@ export default function Index() {
             <div className="p-7 flex flex-col" style={{ background: "var(--metal-mid)", border: "1px solid var(--metal-shine)" }}>
               <h3 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: "Oswald" }}>Быстрая заявка</h3>
               <p className="text-sm mb-6 leading-relaxed" style={{ color: "var(--steel-gray)" }}>
-                Для подбора запчасти воспользуйтесь полной формой — там можно указать марку, модель и поколение автомобиля.
+                Для подбора б/у запчасти воспользуйтесь полной формой — там можно указать марку, модель и поколение автомобиля.
               </p>
               <button className="btn-primary w-full text-center mb-4" onClick={() => nav("request")}>
                 Открыть форму заявки
