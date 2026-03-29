@@ -1081,7 +1081,7 @@ export default function Index() {
                 </div>
 
                 <h1 className="fade-in-delay-1 font-bold text-white leading-none mb-6" style={{ fontFamily: "Oswald", fontSize: "clamp(2.5rem, 8vw, 5rem)" }}>
-                  ПОДБОР ЗАПЧАСТЕЙ<br />
+                  ПОДБОР Б/У ЗАПЧАСТЕЙ<br />
                   <span style={{ color: "var(--rust-red)" }}>БЕЗ НАЦЕНОК</span><br />
                   И ОБМАНА
                 </h1>
