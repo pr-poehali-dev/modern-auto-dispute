@@ -1447,10 +1447,6 @@ export default function Index() {
               </div>
 
               <div className="text-center mt-10 flex flex-wrap items-center justify-center gap-5">
-                <a href="https://www.avito.ru/profile/rating?page_from=profile_menu" target="_blank" rel="noopener noreferrer"
-                  className="text-sm underline" style={{ color: "var(--steel-gray)" }}>
-                  Все отзывы на Авито →
-                </a>
                 {user ? (
                   <button onClick={() => { nav("cabinet"); setCabinetTab("write"); }} className="btn-primary text-sm px-5 py-2">
                     Оставить отзыв
