@@ -525,7 +525,7 @@ export default function Index() {
             <div className="space-y-4">
               {[
                 { icon: "Phone", label: "Телефон", value: "+7 (905) 710-88-90", sub: "Пн–Вс 8:00–20:00" },
-                { icon: "MessageCircle", label: "ВКонтакте", value: "+7 (905) 710-88-90", sub: "Ответ в течение 15 минут" },
+                { icon: "MessageCircle", label: "Max", value: "+7 (905) 710-88-90", sub: "Ответ в течение 15 минут" },
                 { icon: "MapPin", label: "Адрес", value: "Московская обл., Кубинка, Наро-Фоминское ш., д. 4", sub: "Пн–Сб 8:00–20:00 • Вс 9:00–17:00" },
                 { icon: "Mail", label: "Email", value: "pruddzen@gmail.com", sub: "Для юридических лиц и опта" },
               ].map((item, i) => (
