@@ -7,17 +7,25 @@
       "expectedStatus": 200
     },
     {
-      "name": "POST login bad credentials",
+      "name": "POST register - missing fields",
       "method": "POST",
       "path": "/",
-      "body": {"action": "login", "email": "no@no.com", "password": "wrong"},
-      "expectedStatus": 404
+      "body": {"action": "register", "email": "test@test.com"},
+      "expectedStatus": 400
     },
     {
-      "name": "GET root",
-      "method": "GET",
+      "name": "POST login - bad credentials",
+      "method": "POST",
       "path": "/",
-      "expectedStatus": 404
+      "body": {"action": "login", "email": "no@no.com", "password": "wrongpassword"},
+      "expectedStatus": 401
+    },
+    {
+      "name": "POST me - no session",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "me"},
+      "expectedStatus": 401
     }
   ]
 }

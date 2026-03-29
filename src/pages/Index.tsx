@@ -997,7 +997,7 @@ export default function Index() {
   // Загрузить профиль при старте
   useEffect(() => {
     if (sessionId) {
-      fetch(`${AUTH_URL}/me`, { headers: authHeaders })
+      fetch(AUTH_URL, { method: "POST", headers: authHeaders, body: JSON.stringify({ action: "me" }) })
         .then(r => r.json())
         .then(d => { if (d.user) setUser(d.user); else { setSessionId(""); localStorage.removeItem("sid"); } })
         .catch(() => {});
@@ -1019,14 +1019,14 @@ export default function Index() {
   };
 
   const logout = async () => {
-    await fetch(`${AUTH_URL}/logout`, { method: "POST", headers: authHeaders });
+    await fetch(AUTH_URL, { method: "POST", headers: authHeaders, body: JSON.stringify({ action: "logout" }) });
     setUser(null); setSessionId(""); localStorage.removeItem("sid"); nav("home");
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setAuthError(""); setAuthLoading(true);
     try {
-      const r = await fetch(`${AUTH_URL}/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: authForm.email, password: authForm.password }) });
+      const r = await fetch(AUTH_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "login", email: authForm.email, password: authForm.password }) });
       const d = await r.json();
       if (d.session_id) { saveSession(d.session_id, d.user); nav("cabinet"); }
       else setAuthError(d.error || "Ошибка входа");
@@ -1037,7 +1037,7 @@ export default function Index() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault(); setAuthError(""); setAuthLoading(true);
     try {
-      const r = await fetch(`${AUTH_URL}/register`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(authForm) });
+      const r = await fetch(AUTH_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "register", ...authForm }) });
       const d = await r.json();
       if (d.session_id) { saveSession(d.session_id, d.user); nav("cabinet"); }
       else setAuthError(d.error || "Ошибка регистрации");
@@ -1048,7 +1048,7 @@ export default function Index() {
   const loadCabinet = async () => {
     const h = authHeaders;
     const [reqRes, revRes] = await Promise.all([
-      fetch(`${AUTH_URL}/requests`, { headers: h }),
+      fetch(AUTH_URL, { method: "POST", headers: h, body: JSON.stringify({ action: "requests" }) }),
       fetch(`${REVIEWS_URL}/my`, { headers: h }),
     ]);
     const reqs = await reqRes.json(); if (Array.isArray(reqs)) setMyRequests(reqs);

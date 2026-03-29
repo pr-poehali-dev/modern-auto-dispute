@@ -26,6 +26,8 @@ def make_session(conn, user_id):
     return sid
 
 def get_user_by_session(conn, sid):
+    if not sid:
+        return None
     with conn.cursor() as cur:
         cur.execute("""
             SELECT u.id, u.email, u.name, u.phone, u.is_admin
@@ -38,21 +40,21 @@ def get_user_by_session(conn, sid):
     return {'id': row[0], 'email': row[1], 'name': row[2], 'phone': row[3], 'is_admin': row[4]}
 
 def handler(event: dict, context) -> dict:
-    """Регистрация, вход, выход, получение профиля пользователя"""
+    """Регистрация, вход, выход, получение профиля пользователя. Единый endpoint с полем action."""
     if event.get('httpMethod') == 'OPTIONS':
         return {'statusCode': 200, 'headers': CORS, 'body': ''}
 
-    path = event.get('path', '/')
     method = event.get('httpMethod', 'GET')
     body = json.loads(event.get('body') or '{}')
     headers = event.get('headers') or {}
     session_id = headers.get('x-session-id') or headers.get('X-Session-Id', '')
+    action = body.get('action', '')
 
     conn = get_conn()
 
     try:
-        # POST /register
-        if method == 'POST' and path.endswith('/register'):
+        # register
+        if method == 'POST' and action == 'register':
             email = (body.get('email') or '').strip().lower()
             password = body.get('password') or ''
             name = (body.get('name') or '').strip()
@@ -73,11 +75,11 @@ def handler(event: dict, context) -> dict:
             sid = make_session(conn, user_id)
             return {'statusCode': 200, 'headers': CORS, 'body': json.dumps({
                 'session_id': sid,
-                'user': {'id': user_id, 'email': email, 'name': name, 'is_admin': False}
+                'user': {'id': user_id, 'email': email, 'name': name, 'phone': None, 'is_admin': False}
             })}
 
-        # POST /login
-        if method == 'POST' and path.endswith('/login'):
+        # login
+        if method == 'POST' and action == 'login':
             email = (body.get('email') or '').strip().lower()
             password = body.get('password') or ''
             with conn.cursor() as cur:
@@ -92,23 +94,23 @@ def handler(event: dict, context) -> dict:
                 'user': {'id': row[0], 'email': row[1], 'name': row[2], 'phone': row[3], 'is_admin': row[4]}
             })}
 
-        # POST /logout
-        if method == 'POST' and path.endswith('/logout'):
+        # logout
+        if method == 'POST' and action == 'logout':
             if session_id:
                 with conn.cursor() as cur:
                     cur.execute("UPDATE sessions SET expires_at = NOW() WHERE id = %s", (session_id,))
                 conn.commit()
             return {'statusCode': 200, 'headers': CORS, 'body': json.dumps({'ok': True})}
 
-        # GET /me
-        if method == 'GET' and path.endswith('/me'):
+        # me
+        if method == 'POST' and action == 'me':
             user = get_user_by_session(conn, session_id)
             if not user:
                 return {'statusCode': 401, 'headers': CORS, 'body': json.dumps({'error': 'Не авторизован'})}
             return {'statusCode': 200, 'headers': CORS, 'body': json.dumps({'user': user})}
 
-        # POST /profile — обновление профиля
-        if method == 'POST' and path.endswith('/profile'):
+        # profile update
+        if method == 'POST' and action == 'profile':
             user = get_user_by_session(conn, session_id)
             if not user:
                 return {'statusCode': 401, 'headers': CORS, 'body': json.dumps({'error': 'Не авторизован'})}
@@ -119,8 +121,8 @@ def handler(event: dict, context) -> dict:
             conn.commit()
             return {'statusCode': 200, 'headers': CORS, 'body': json.dumps({'ok': True})}
 
-        # GET /requests — история заявок пользователя
-        if method == 'GET' and path.endswith('/requests'):
+        # requests history
+        if method == 'POST' and action == 'requests':
             user = get_user_by_session(conn, session_id)
             if not user:
                 return {'statusCode': 401, 'headers': CORS, 'body': json.dumps({'error': 'Не авторизован'})}
